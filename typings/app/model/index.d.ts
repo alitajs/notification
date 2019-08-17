@@ -2,10 +2,10 @@
 // Do not modify this file!!!!!!!!!
 
 import 'egg';
-import ExportSecret from '../../../app/model/secret';
+import ExportChat from '../../../app/model/chat';
 
 declare module 'egg' {
   interface IModel {
-    Secret: ReturnType<typeof ExportSecret>;
+    Chat: ReturnType<typeof ExportChat>;
   }
 }

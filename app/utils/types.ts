@@ -1,3 +1,4 @@
+import { YamlJoiSchema } from 'yaml-joi';
 import { DefineAttributeColumnOptions } from 'sequelize';
 
 export type PowerPartial<T> = { [U in keyof T]?: T[U] extends object ? PowerPartial<T[U]> : T[U] };
@@ -17,3 +18,9 @@ export type ArgsOrArg0<T extends (...a: any) => any> = ArgsType<T> extends [Args
 export type Include<T, U> = T extends U ? T : never;
 
 export type DefineModelAttr<T> = { [P in keyof T]: DefineAttributeColumnOptions };
+
+export type DefineModel<T> = {
+  Attr: DefineModelAttr<T>;
+  Sample: T;
+  Validator: YamlJoiSchema;
+};

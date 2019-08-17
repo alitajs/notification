@@ -2,11 +2,11 @@ import { changeRadix } from '@imhele/radix';
 import { MD5, SHA1, SHA256, SHA512, HmacMD5, HmacSHA1, HmacSHA256, HmacSHA512 } from 'crypto-js';
 import { Context } from 'egg';
 import { Schema } from 'joi';
-import { Dictionary } from 'lodash';
+import { pick, Dictionary } from 'lodash';
 import { getObjectSearchKeys } from 'object-search-key';
 import { WhereOptions } from 'sequelize';
 import yamlJoi, { JoiSchema } from 'yaml-joi';
-import { DefineModelAttr } from './types';
+import { DefineModel, DefineModelAttr } from './types';
 
 export { changeRadix };
 export { default as ErrCode } from './errorcode';
@@ -82,6 +82,14 @@ export function validate<T>(instance: T, validator: Schema): T {
   const { error, value } = validator.validate(instance);
   if (error) throw error;
   return value;
+}
+
+export function validateModel<T>(define: DefineModel<T>, attrs: Partial<T>): T {
+  return validate({ ...define.Sample, ...attrs }, define.Validator);
+}
+
+export function validateAttr<T, U>(define: DefineModel<T>, attrs: U): U {
+  return pick(validateModel(define, attrs), ...Object.keys(attrs)) as U;
 }
 
 export function extractDefaultValue<T>(attrDefinition: DefineModelAttr<T>): Partial<T> {

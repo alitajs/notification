@@ -2,10 +2,10 @@
 // Do not modify this file!!!!!!!!!
 
 import 'egg';
-import ExportAuth from '../../../app/service/auth';
+import ExportChat from '../../../app/service/chat';
 
 declare module 'egg' {
   interface IService {
-    auth: ExportAuth;
+    chat: ExportChat;
   }
 }

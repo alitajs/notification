@@ -2,10 +2,10 @@
 // Do not modify this file!!!!!!!!!
 
 import 'egg';
-import ExportAccount from '../../../app/controller/account';
+import ExportChat from '../../../app/controller/chat';
 
 declare module 'egg' {
   interface IController {
-    account: ExportAccount;
+    chat: ExportChat;
   }
 }
