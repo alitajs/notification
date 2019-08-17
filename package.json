@@ -1,0 +1,85 @@
+{
+  "name": "appname",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "egg-scripts start --daemon --title=egg-server-appname",
+    "stop": "egg-scripts stop --title=egg-server-appname",
+    "start:prod": "egg-scripts start --daemon --title=egg-server-appname --stdout=$HOME/logs/appname/master-stdout.log --stderr=$HOME/logs/appname/master-stderr.log",
+    "start:mysql": "sudo service mysql start",
+    "start:redis": "sudo redis-server /etc/redis-5.0.5/redis.conf",
+    "start:migrate": "cross-env NODE_ENV=production sequelize db:migrate",
+    "dev": "egg-bin dev",
+    "debug": "egg-bin debug",
+    "test-local": "egg-bin test",
+    "test": "npm run lint -- --fix && npm run test-local",
+    "cov": "egg-bin cov",
+    "tsc": "ets && tsc -p tsconfig.json",
+    "ci": "npm run lint && npm run cov && npm run tsc",
+    "autod": "autod",
+    "lint": "tslint --project . -c tslint.yml",
+    "lint-staged": "lint-staged",
+    "clean": "ets clean"
+  },
+  "dependencies": {
+    "@alicloud/pop-core": "^1.7.7",
+    "@imhele/radix": "^1.1.0",
+    "crypto-js": "^3.1.9-1",
+    "egg": "^2.6.1",
+    "egg-scripts": "^2.6.0",
+    "egg-sequelize": "^4.3.1",
+    "glob": "^7.1.4",
+    "lodash": "^4.17.11",
+    "mysql2": "^1.6.5",
+    "object-search-key": "^1.0.2",
+    "redis": "^2.8.0",
+    "tablestore": "^4.3.2",
+    "tsconfig-paths": "^3.8.0",
+    "tslib": "^1.10.0",
+    "yaml-joi": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/crypto-js": "^3.1.43",
+    "@types/joi": "^14.3.3",
+    "@types/js-yaml": "^3.12.1",
+    "@types/lodash": "^4.14.123",
+    "@types/mocha": "~2.2.40",
+    "@types/node": "^10.0.12",
+    "@types/redis": "^2.8.13",
+    "@types/supertest": "~2.0.0",
+    "autod": "^3.0.1",
+    "autod-egg": "^1.1.0",
+    "coveralls": "^3.0.2",
+    "egg-bin": "^4.6.2",
+    "egg-ci": "^1.8.0",
+    "egg-mock": "^3.16.0",
+    "egg-ts-helper": "^1.11.0",
+    "husky": "^2.2.0",
+    "lint-staged": "^7.2.2",
+    "prettier": "^1.18.2",
+    "sequelize-cli": "^5.4.0",
+    "tslint": "^5.0.0",
+    "typescript": "^3.4.3"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint-staged"
+    }
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx}": [
+      "tslint --fix -c tslint.yml",
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "egg": {
+    "typescript": true,
+    "require": [
+      "egg-ts-helper/register"
+    ]
+  },
+  "engines": {
+    "node": ">=10.0.0"
+  }
+}
