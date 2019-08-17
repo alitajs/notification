@@ -6,7 +6,7 @@ export default (appInfo: EggAppInfo) => {
     // ref: https://github.com/eggjs/egg-sequelize
     sequelize: {
       dialect: 'mysql', // support: mysql, postgres, mssql
-      database: 'appname',
+      database: 'notification',
       host: '127.0.0.1',
       port: 3306,
       username: 'port',

@@ -39,7 +39,7 @@ export default (appInfo: EggAppInfo): PowerPartial<EggAppConfig> & typeof bizCon
 
   // Redis
   config.redis = {
-    prefix: 'appname:',
+    prefix: 'notification:',
   } as RedisOpts;
 
   config.parser = {} as ParserConfig;

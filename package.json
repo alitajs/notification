@@ -1,11 +1,11 @@
 {
-  "name": "appname",
+  "name": "notification",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "egg-scripts start --daemon --title=egg-server-appname",
-    "stop": "egg-scripts stop --title=egg-server-appname",
-    "start:prod": "egg-scripts start --daemon --title=egg-server-appname --stdout=$HOME/logs/appname/master-stdout.log --stderr=$HOME/logs/appname/master-stderr.log",
+    "start": "egg-scripts start --daemon --title=egg-server-notification",
+    "stop": "egg-scripts stop --title=egg-server-notification",
+    "start:prod": "egg-scripts start --daemon --title=egg-server-notification --stdout=$HOME/logs/notification/master-stdout.log --stderr=$HOME/logs/notification/master-stderr.log",
     "start:mysql": "sudo service mysql start",
     "start:redis": "sudo redis-server /etc/redis-5.0.5/redis.conf",
     "start:migrate": "cross-env NODE_ENV=production sequelize db:migrate",
