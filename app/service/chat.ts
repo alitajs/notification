@@ -5,7 +5,7 @@ import { Service } from 'egg';
 import sequelize from 'sequelize';
 
 /**
- * Service of auth
+ * Service of chat
  */
 export default class ChatService extends Service {
   public getAllAccountChats(accountId: string) {
