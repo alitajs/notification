@@ -1,6 +1,6 @@
 import { DefineModel } from '@/utils/types';
 import { Application } from 'egg';
-import { INTEGER, Instance, STRING } from 'sequelize';
+import { CHAR, INTEGER, Instance } from 'sequelize';
 import yamlJoi from 'yaml-joi';
 
 export interface Chat {
@@ -13,11 +13,11 @@ export interface Chat {
 export const DefineChat: DefineModel<Chat> = {
   Attr: {
     accountId: {
-      type: STRING(18),
+      type: CHAR(18),
       allowNull: false,
     },
     chatId: {
-      type: STRING(22),
+      type: CHAR(22),
       allowNull: false,
     },
     maxMsgId: {
