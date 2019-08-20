@@ -1,6 +1,5 @@
 import { DefineChat } from '@/model/chat';
 import { validateAttr } from '@/utils';
-// import { NotFound } from '@/utils/errorcode';
 import { Service } from 'egg';
 
 /**

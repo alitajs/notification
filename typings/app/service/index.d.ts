@@ -3,9 +3,13 @@
 
 import 'egg';
 import ExportChat from '../../../app/service/chat';
+import ExportMsg from '../../../app/service/msg';
+import ExportSpread from '../../../app/service/spread';
 
 declare module 'egg' {
   interface IService {
     chat: ExportChat;
+    msg: ExportMsg;
+    spread: ExportSpread;
   }
 }

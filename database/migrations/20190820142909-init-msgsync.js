@@ -3,7 +3,7 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     const { CHAR, INTEGER } = Sequelize;
-    await queryInterface.createTable('MsgSync', {
+    await queryInterface.createTable('Msgsync', {
       chatId: {
         type: CHAR(22),
         allowNull: false,
@@ -37,13 +37,13 @@ module.exports = {
         type: STRING(16),
       },
     });
-    await queryInterface.addIndex('MsgSync', {
+    await queryInterface.addIndex('Msgsync', {
       name: 'receivedMsg',
       fields: ['recipientId', 'createTime'],
     });
   },
 
   down: async queryInterface => {
-    await queryInterface.dropTable('MsgSync');
+    await queryInterface.dropTable('Msgsync');
   },
 };

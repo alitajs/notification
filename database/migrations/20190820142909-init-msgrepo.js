@@ -3,7 +3,7 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     const { CHAR, INTEGER } = Sequelize;
-    await queryInterface.createTable('MsgRepo', {
+    await queryInterface.createTable('Msgrepo', {
       chatId: {
         type: CHAR(22),
         allowNull: false,
@@ -33,14 +33,14 @@ module.exports = {
         type: STRING(16),
       },
     });
-    await queryInterface.addConstraint('MsgRepo', ['chatId', 'msgId'], {
+    await queryInterface.addConstraint('Msgrepo', ['chatId', 'msgId'], {
       type: 'primary key',
       name: 'PrimaryKey',
     });
-    await queryInterface.addIndex('MsgRepo', { name: 'msgCreateTime', fields: ['chatId', 'createTime'] });
+    await queryInterface.addIndex('Msgrepo', { name: 'msgCreateTime', fields: ['chatId', 'createTime'] });
   },
 
   down: async queryInterface => {
-    await queryInterface.dropTable('MsgRepo');
+    await queryInterface.dropTable('Msgrepo');
   },
 };

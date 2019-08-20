@@ -3,9 +3,13 @@
 
 import 'egg';
 import ExportChat from '../../../app/model/chat';
+import ExportMsgrepo from '../../../app/model/msgrepo';
+import ExportMsgsync from '../../../app/model/msgsync';
 
 declare module 'egg' {
   interface IModel {
     Chat: ReturnType<typeof ExportChat>;
+    Msgrepo: ReturnType<typeof ExportMsgrepo>;
+    Msgsync: ReturnType<typeof ExportMsgsync>;
   }
 }

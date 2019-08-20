@@ -3,7 +3,7 @@ import { Application } from 'egg';
 import { CHAR, INTEGER, Instance, STRING, TEXT } from 'sequelize';
 import yamlJoi from 'yaml-joi';
 
-export interface MsgSync {
+export interface Msgsync {
   chatId: string;
   content: string;
   createTime: number;
@@ -14,7 +14,7 @@ export interface MsgSync {
   type: string | null;
 }
 
-export const DefineChat: DefineModel<MsgSync> = {
+export const DefineMsgsync: DefineModel<Msgsync> = {
   Attr: {
     chatId: {
       type: CHAR(22),
@@ -115,6 +115,8 @@ export const DefineChat: DefineModel<MsgSync> = {
 };
 
 export default (app: Application) =>
-  app.model.define<Instance<MsgSync>, MsgSync>('MsgSync', DefineChat.Attr, {
+  app.model.define<Instance<Msgsync>, Msgsync>('Msgsync', DefineMsgsync.Attr, {
+    // use index `receivedMsg` in mysql event:
+    // DELETE FROM `Msgsync` WHERE `recipientId` <> NULL AND `createTime` < 1234567890000;
     indexes: [{ name: 'receivedMsg', fields: ['recipientId', 'createTime'] }],
   });

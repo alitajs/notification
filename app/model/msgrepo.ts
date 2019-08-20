@@ -3,7 +3,7 @@ import { Application } from 'egg';
 import { CHAR, INTEGER, Instance, STRING, TEXT } from 'sequelize';
 import yamlJoi from 'yaml-joi';
 
-export interface MsgRepo {
+export interface Msgrepo {
   chatId: string;
   content: string;
   createTime: number;
@@ -14,7 +14,7 @@ export interface MsgRepo {
 }
 
 // TODO: check the usage of indexes (created by primary key) with sequelize
-export const DefineChat: DefineModel<MsgRepo> = {
+export const DefineMsgrepo: DefineModel<Msgrepo> = {
   Attr: {
     chatId: {
       type: CHAR(22),
@@ -104,7 +104,7 @@ export const DefineChat: DefineModel<MsgRepo> = {
 };
 
 export default (app: Application) =>
-  app.model.define<Instance<MsgRepo>, MsgRepo>('MsgRepo', DefineChat.Attr, {
+  app.model.define<Instance<Msgrepo>, Msgrepo>('Msgrepo', DefineMsgrepo.Attr, {
     indexes: [
       { name: 'PrimaryKey', unique: true, fields: ['chatId', 'msgId'] },
       { name: 'msgCreateTime', fields: ['chatId', 'createTime'] },
