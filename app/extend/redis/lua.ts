@@ -1,36 +1,56 @@
 import { PromisifiedCommands } from 'redis';
 
 export interface LuaScripts {
-  incrifexists: (keys: [string]) => Promise<number>;
+  increxists: (keys: [string], expire?: number) => Promise<number>;
 }
 
 const Scripts: { [key in keyof LuaScripts]: string } = {
-  incrifexists: '',
+  increxists: `
+if( redis.call('EXISTS', KEYS[1]) == 1 )
+then
+  if( ARGV[1] )
+  then
+    local value = redis.call('INCR', KEYS[1])
+    redis.call('EXPIRE', KEYS[1], ARGV[1])
+    return value
+  else
+    return redis.call('INCR', KEYS[1])
+  end
+else
+  return 0
+end
+`.trim(),
 };
 
 const ScriptsSha1 = {} as { [key in keyof LuaScripts]: string };
 
-async function loadScript(client: PromisifiedCommands, command: keyof LuaScripts) {
-  ScriptsSha1[command] = await client.script('LOAD', Scripts[command]);
-  if (!ScriptsSha1[command] || typeof ScriptsSha1[command] !== 'string')
-    throw new Error(`Load redis lua script \`${command}\` failed.`);
+async function loadScript(client: PromisifiedCommands, name: keyof LuaScripts) {
+  ScriptsSha1[name] = await client.script('LOAD', Scripts[name]);
+  if (!ScriptsSha1[name] || typeof ScriptsSha1[name] !== 'string')
+    throw new Error(`Load redis lua script \`${name}\` failed.`);
 }
 
 async function extendLuaScripts(client: PromisifiedCommands) {
   const methods = {} as LuaScripts;
-  const luaCommands = (Object.keys(Scripts) as (keyof LuaScripts)[]).map(async command => {
-    await loadScript(client, command);
-    methods[command] = async (keys, ...args) => {
+  const luaScriptsName = Object.keys(Scripts) as (keyof LuaScripts)[];
+  const loadTasks = luaScriptsName.map(async name => {
+    await loadScript(client, name);
+    methods[name] = async (keys, ...args) => {
       try {
-        return await client.evalsha(ScriptsSha1[command], keys.length, ...args);
+        return await client.evalsha(
+          ScriptsSha1[name],
+          keys.length,
+          ...keys,
+          ...args.map(arg => (arg === undefined ? '' : arg.toString())),
+        );
       } catch (error) {
-        if (await client.script('EXISTS', Scripts[command])) throw error;
-        await loadScript(client, command);
-        return methods[command](keys, ...args);
+        if (await client.script('EXISTS', Scripts[name])) throw error;
+        await loadScript(client, name);
+        return methods[name](keys, ...args);
       }
     };
   });
-  await Promise.all(luaCommands);
+  await Promise.all(loadTasks);
   return methods;
 }
 
