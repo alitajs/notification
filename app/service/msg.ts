@@ -12,10 +12,19 @@ export default class MsgService extends Service {
   };
 
   public async getNextMsgId(chatId: string) {
+    chatId = validateAttr(DefineMsgrepo, { chatId }).chatId;
     const nextMsgId = await this.app.redis.incr(chatId);
+    if (!nextMsgId || nextMsgId <= 1) {
+      this.getLastMsgIdFromRepo(chatId); // TODO
+    }
   }
 
-  private getLastMsgIdFromRepo(chatId: string) {
-    return this.ctx.model.Msgrepo.findOne();
+  private async getLastMsgIdFromRepo(chatId: string): Promise<number> {
+    const msgrepo = await this.ctx.model.Msgrepo.findOne({
+      attributes: ['msgId'],
+      order: [['msgId', 'DESC']],
+      where: { chatId },
+    });
+    return msgrepo ? msgrepo.get('msgId') : 0;
   }
 }

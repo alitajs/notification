@@ -33,7 +33,13 @@ const app: ThisType<Application & { $SYMBOL: any }> & ApplicationExtension = {
   },
   get redis() {
     const key = (extendRedis.cacheKey as unknown) as '$SYMBOL';
-    if (!this[key]) this[key] = extendRedis(this);
+    if (this[key] === null) return null;
+    if (!this[key]) {
+      this[key] = null;
+      this.hook.onAppReady(async () => {
+        this[key] = await extendRedis(this);
+      });
+    }
     return this[key];
   },
 };

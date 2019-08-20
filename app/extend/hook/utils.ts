@@ -4,14 +4,32 @@ export interface Hook<T extends any[] = any[]> {
    * Add call back to this hooks.
    * Return `true` will not delete this call back after call
    */
-  (...cbk: ((...args: T) => boolean | void)[]): number;
-  queue: ((...args: T) => boolean | void)[];
+  (...cbk: ((...args: T) => boolean | void | Promise<boolean | void>)[]): number;
+  queue: ((...args: T) => boolean | void | Promise<boolean | void>)[];
   run: (...args: T) => void;
+  wait: (...args: T) => Promise<void>;
 }
 
 export const createHook = <T extends any[]>(): Hook<T> => {
   const hook: Hook<T> = (...args) => hook.queue.push(...args);
   hook.queue = [] as ((...args: T) => boolean | void)[];
-  hook.run = (...args: T) => (hook.queue = hook.queue.filter(cbk => cbk(...args)));
+  hook.run = (...args: T) => {
+    const queue: Hook<T>['queue'] = [];
+    for (const cbk of hook.queue) {
+      if (cbk(...args) === true) {
+        queue.push(cbk);
+      }
+    }
+    hook.queue = queue;
+  };
+  hook.wait = async (...args: T) => {
+    const queue: Hook<T>['queue'] = [];
+    for (const cbk of hook.queue) {
+      if ((await cbk(...args)) === true) {
+        queue.push(cbk);
+      }
+    }
+    hook.queue = queue;
+  };
   return hook;
 };

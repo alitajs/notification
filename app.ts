@@ -7,6 +7,6 @@ export default class Boot {
   }
 
   async serverDidReady() {
-    this.app.hook.onAppReady.run(this.app);
+    await this.app.hook.onAppReady.wait(this.app);
   }
 }

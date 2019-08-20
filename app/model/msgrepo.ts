@@ -70,6 +70,7 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
             isSchema: true
             limitation:
               - max: 65535
+              - allow: ""
           createTime:
             type: number
             isSchema: true
@@ -82,6 +83,7 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
             limitation:
               - max: 6
               - token: []
+              - allow: ""
           msgId:
             type: number
             isSchema: true

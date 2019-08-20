@@ -2,7 +2,7 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    const { CHAR, INTEGER } = Sequelize;
+    const { CHAR, INTEGER, STRING, TEXT } = Sequelize;
     await queryInterface.createTable('Msgrepo', {
       chatId: {
         type: CHAR(22),
