@@ -19,7 +19,7 @@ export default (appInfo: EggAppInfo) => {
       define: {
         timestamps: false,
         underscored: false,
-        freezeTableName: false,
+        freezeTableName: true,
       },
     },
     logger: {

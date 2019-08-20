@@ -5,7 +5,8 @@
     "database": "notification_dev",
     "host": "127.0.0.1",
     "dialect": "mysql",
-    "operatorsAliases": false
+    "operatorsAliases": false,
+    "freezeTableName": true
   },
   "test": {
     "username": "port",
@@ -13,7 +14,8 @@
     "database": "notification_test",
     "host": "127.0.0.1",
     "dialect": "mysql",
-    "operatorsAliases": false
+    "operatorsAliases": false,
+    "freezeTableName": true
   },
   "production": {
     "username": "port",
@@ -21,6 +23,7 @@
     "database": "notification",
     "host": "127.0.0.1",
     "dialect": "mysql",
-    "operatorsAliases": false
+    "operatorsAliases": false,
+    "freezeTableName": true
   }
 }
