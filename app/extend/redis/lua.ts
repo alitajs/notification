@@ -1,7 +1,9 @@
 import { PromisifiedCommands } from 'redis';
+import { Dictionary } from 'lodash';
 
-export interface LuaScripts {
-  increxists: (keys: [string], expire?: number) => Promise<number>;
+export interface LuaScripts extends Dictionary<(keys: string[], ...args: any[]) => Promise<any>> {
+  increxists: (keys: string[], expire?: number) => Promise<number>;
+  setmax: (keys: string[], value: number) => Promise<number>;
 }
 
 const Scripts: { [key in keyof LuaScripts]: string } = {
@@ -19,6 +21,15 @@ then
 else
   return 0
 end
+`.trim(),
+  setmax: `
+local previous = tonumber(redis.call('GET', KEYS[1])) or 0
+if( previous < ARGV[1] )
+then
+  redis.call('SET', ARGV[1])
+  return ARGV[1]
+end
+return previous
 `.trim(),
 };
 
