@@ -1,9 +1,15 @@
-import { DefineMsgrepo } from '@/model/msgrepo';
-import { DefineMsgsync } from '@/model/msgsync';
+import { DefineMsgrepo, Msgrepo } from '@/model/msgrepo';
+import { DefineMsgsync, Msgsync } from '@/model/msgsync';
 import { validateAttr } from '@/utils';
 // import { NotFound } from '@/utils/errorcode';
 import { Service } from 'egg';
 import { Op } from 'sequelize';
+
+export const enum MsgType {
+  text,
+  recall,
+  recalled,
+}
 
 /**
  * Service of message
@@ -69,6 +75,18 @@ export default class MsgService extends Service {
         createTime: { [Op.gt]: attrs.createTime },
       },
     });
+  }
+
+  public async insertMsgSync(message: Msgrepo) {
+    const members = await this.ctx.model.Chat.findAll({
+      attributes: ['accountId'],
+      where: { chatId: message.chatId },
+    });
+    const records: Msgsync[] = members.map(member => ({
+      ...message,
+      recipientId: member.get('accountId'),
+    }));
+    return this.ctx.model.Msgsync.bulkCreate(records, { ignoreDuplicates: true });
   }
 
   private getNextMsgIdFromRedis(chatId: string) {

@@ -1,63 +1,24 @@
 import { DefineModel } from '@/utils/types';
 import { Application } from 'egg';
-import { CHAR, INTEGER, Instance, STRING, TEXT } from 'sequelize';
+import { CHAR, Instance } from 'sequelize';
 import yamlJoi from 'yaml-joi';
+import { DefineMsgrepo, Msgrepo } from './msgrepo';
 
-export interface Msgsync {
-  chatId: string;
-  content: string;
-  createTime: number;
-  deDuplicate: string;
-  msgId: number;
+export interface Msgsync extends Msgrepo {
   recipientId: string;
-  senderId: string;
-  type: number | null;
 }
 
 export const DefineMsgsync: DefineModel<Msgsync> = {
   Attr: {
-    chatId: {
-      type: CHAR(22),
-      allowNull: false,
-    },
-    content: {
-      type: TEXT,
-      allowNull: false,
-      defaultValue: '',
-    },
-    createTime: {
-      type: INTEGER,
-      allowNull: false,
-    },
-    deDuplicate: {
-      type: STRING(6),
-      allowNull: false,
-    },
-    msgId: {
-      type: INTEGER,
-      allowNull: false,
-    },
+    ...DefineMsgrepo.Attr,
     recipientId: {
       type: CHAR(18),
       allowNull: false,
     },
-    senderId: {
-      type: CHAR(18),
-      allowNull: false,
-    },
-    type: {
-      type: INTEGER,
-    },
   },
   Sample: {
-    chatId: 'abcdefghijklmnopqrstuv',
-    content: '',
-    createTime: 0,
-    deDuplicate: '',
-    msgId: 0,
+    ...DefineMsgrepo.Sample,
     recipientId: 'abcdefghijklmnopqr',
-    senderId: 'abcdefghijklmnopqr',
-    type: null,
   },
   Validator: yamlJoi(`
     type: object
@@ -121,5 +82,8 @@ export default (app: Application) =>
   app.model.define<Instance<Msgsync>, Msgsync>('Msgsync', DefineMsgsync.Attr, {
     // use index `receivedMsg` in mysql event:
     // DELETE FROM `Msgsync` WHERE `recipientId` > '' AND `createTime` < 1234567890000;
-    indexes: [{ name: 'receivedMsg', fields: ['recipientId', 'createTime'] }],
+    indexes: [
+      { name: 'receivedMsg', fields: ['recipientId', 'createTime'] },
+      { name: 'PrimaryKey', unique: true, fields: ['recipientId', 'chatId', 'msgId'] },
+    ],
   });
