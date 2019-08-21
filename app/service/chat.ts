@@ -34,6 +34,18 @@ export default class ChatService extends Service {
     }));
   }
 
+  public async getMsgUnreadAccounts(chatId: string, msgId: number) {
+    const attrs = validateAttr(DefineChat, { chatId, readedMsgId: msgId });
+    const accounts = await this.ctx.model.Chat.findAll({
+      attributes: ['accountId'],
+      where: {
+        chatId: attrs.chatId,
+        readedMsgId: { [sequelize.Op.lt]: attrs.readedMsgId },
+      },
+    });
+    return accounts.map(account => account.get().accountId);
+  }
+
   public async getUnreadCount(chatId: string, accountId: string) {
     const where = validateAttr(DefineChat, { accountId, chatId });
     const instance = await this.ctx.model.Chat.findOne({ where });
@@ -48,6 +60,15 @@ export default class ChatService extends Service {
     // use `findOrCreate` to ensure `Union(chatId, accountId)` is unique.
     const [instance] = await this.ctx.model.Chat.findOrCreate({ where });
     return instance;
+  }
+
+  public async isChatMember(accountId: string, chatId: string) {
+    const where = validateAttr(DefineChat, { accountId, chatId });
+    const instance = await this.ctx.model.Chat.findOne({
+      attributes: [[sequelize.literal('1'), 'placeholder']],
+      where,
+    });
+    return !!instance;
   }
 
   public listAccountChats(accountId: string, limit: number, offset?: number) {

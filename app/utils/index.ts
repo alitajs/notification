@@ -133,9 +133,7 @@ limitation:
         allowEmpty: nothing
         limitation:
           - min: 1
-          - max: 100
           - integer: []
-          - default: 10
       offset:
         type: number
         isSchema: true
@@ -143,13 +141,12 @@ limitation:
         limitation:
           - min: 0
           - integer: []
-          - default: 0
 `);
 
 export function validatePagination(
   ctx: Context,
   obj: Dictionary<any>,
-): { limit: number; offset: number } {
+): { limit?: number; offset?: number } {
   return validate(ctx.app.lodash.pick(obj, 'limit', 'offset'), paginationValidator);
 }
 

@@ -36,7 +36,7 @@ module.exports = {
         type: INTEGER,
       },
     });
-    await queryInterface.addConstraint('Msgrepo', ['recipientId', 'chatId', 'msgId'], {
+    await queryInterface.addConstraint('Msgsync', ['recipientId', 'chatId', 'msgId'], {
       type: 'primary key',
       name: 'PrimaryKey',
     });

@@ -3,6 +3,7 @@ import { Application } from 'egg';
 import { CHAR, INTEGER, Instance } from 'sequelize';
 import yamlJoi from 'yaml-joi';
 
+// TODO: chat admin
 export interface Chat {
   accountId: string;
   chatId: string;

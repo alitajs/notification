@@ -6,7 +6,6 @@ import { Service } from 'egg';
 import { Op } from 'sequelize';
 
 export const enum MsgType {
-  text,
   recall,
   recalled,
 }
@@ -16,6 +15,7 @@ export const enum MsgType {
  */
 export default class MsgService extends Service {
   static MsgIdRedisExpire = 7 * 24 * 60 * 60;
+  static MsgSyncChunk = 500;
   static RedisKey = {
     MsgId: (chatId: string) => `msgid:${chatId}`,
   };
@@ -82,11 +82,14 @@ export default class MsgService extends Service {
       attributes: ['accountId'],
       where: { chatId: message.chatId },
     });
-    const records: Msgsync[] = members.map(member => ({
-      ...message,
-      recipientId: member.get('accountId'),
-    }));
-    return this.ctx.model.Msgsync.bulkCreate(records, { ignoreDuplicates: true });
+    const chunk = this.app.lodash.chunk(members, MsgService.MsgSyncChunk);
+    for (const part of chunk) {
+      const records: Msgsync[] = part.map(member => ({
+        ...message,
+        recipientId: member.get('accountId'),
+      }));
+      await this.ctx.model.Msgsync.bulkCreate(records, { ignoreDuplicates: true });
+    }
   }
 
   private getNextMsgIdFromRedis(chatId: string) {
