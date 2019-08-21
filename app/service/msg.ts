@@ -20,17 +20,15 @@ export default class MsgService extends Service {
       /**
        * do not increase `lastMsgId` by one and set to redis directly
        * @deprecated
-       * const expire = MsgService.MsgIdRedisExpire;
-       * nextMsgId = await this.app.redis.setmax([chatId], lastMsgId + 1, expire);
+       * await this.app.redis.set(chatId, lastMsgId + 1);
        */
-      await this.app.redis.setmax([chatId], lastMsgId);
-      nextMsgId = await this.getNextMsgIdFromRedis(chatId);
+      nextMsgId = await this.app.redis.incrsetnx([chatId], lastMsgId, MsgService.MsgIdRedisExpire);
     }
     return nextMsgId;
   }
 
   private getNextMsgIdFromRedis(chatId: string) {
-    return this.app.redis.increxists([chatId], MsgService.MsgIdRedisExpire);
+    return this.app.redis.incrx([chatId], MsgService.MsgIdRedisExpire);
   }
 
   private async getLastMsgIdFromRepo(chatId: string): Promise<number> {

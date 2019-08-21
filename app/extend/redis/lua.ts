@@ -2,45 +2,36 @@ import { PromisifiedCommands } from 'redis';
 import { Dictionary } from 'lodash';
 
 export interface LuaScripts extends Dictionary<(keys: string[], ...args: any[]) => Promise<any>> {
-  increxists: (keys: string[], expire?: number) => Promise<number>;
-  setmax: (keys: string[], value: number, expire?: number) => Promise<number>;
+  /**
+   * increase by `1` and return result if the key exists, otherwise return `0`
+   */
+  incrx: (keys: string[], expire?: number) => Promise<number>;
+  /**
+   * increase by `1` and return result if the key exists, otherwise the incoming value
+   * will be set and then increase by `1`, finally return the result.
+   */
+  incrsetnx: (keys: string[], value: number, expire?: number) => Promise<number>;
 }
 
 const Scripts: { [key in keyof LuaScripts]: string } = {
-  increxists: `
-if( redis.call('EXISTS', KEYS[1]) == 1 )
+  incrx: `\
+if (redis.call('EXISTS', KEYS[1]) == 1)
 then
-  if( ARGV[1] )
+  if (ARGV[1])
   then
-    local value = redis.call('INCR', KEYS[1])
     redis.call('EXPIRE', KEYS[1], ARGV[1])
-    return value
-  else
-    return redis.call('INCR', KEYS[1])
   end
+  return redis.call('INCR', KEYS[1])
 else
   return 0
-end
-`.trim(),
-  setmax: `
-local next = tonumber(ARGV[1]) or 0
-local previous = tonumber(redis.call('GET', KEYS[1])) or 0
-if( previous < next )
-then
-  if( ARGV[2] )
-  then
-    redis.call('SETEX', KEYS[1], ARGV[2], next)
-  else
-    redis.call('SET', KEYS[1], next)
-  end
-  return next
-end
-if( ARGV[2] )
+end`,
+  incrsetnx: `\
+redis.call('SETNX', KEYS[1], ARGV[1])
+if (ARGV[2])
 then
   redis.call('EXPIRE', KEYS[1], ARGV[2])
 end
-return previous
-`.trim(),
+return redis.call('INCR', KEYS[1])`,
 };
 
 const ScriptsSha1 = {} as { [key in keyof LuaScripts]: string };
