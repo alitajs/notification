@@ -11,7 +11,6 @@ module.exports = {
       content: {
         type: TEXT,
         allowNull: false,
-        defaultValue: '',
       },
       createTime: {
         type: INTEGER,
@@ -37,7 +36,10 @@ module.exports = {
       type: 'primary key',
       name: 'PrimaryKey',
     });
-    await queryInterface.addIndex('Msgrepo', { name: 'msgCreateTime', fields: ['chatId', 'createTime'] });
+    await queryInterface.addIndex('Msgrepo', {
+      name: 'msgCreateTime',
+      fields: ['chatId', 'createTime'],
+    });
   },
 
   down: async queryInterface => {

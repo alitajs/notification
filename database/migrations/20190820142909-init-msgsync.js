@@ -11,7 +11,6 @@ module.exports = {
       content: {
         type: TEXT,
         allowNull: false,
-        defaultValue: '',
       },
       createTime: {
         type: INTEGER,

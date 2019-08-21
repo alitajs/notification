@@ -23,7 +23,6 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
     content: {
       type: TEXT,
       allowNull: false,
-      defaultValue: '',
     },
     createTime: {
       type: INTEGER,
