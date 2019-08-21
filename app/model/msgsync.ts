@@ -11,7 +11,7 @@ export interface Msgsync {
   msgId: number;
   recipientId: string;
   senderId: string;
-  type: string | null;
+  type: number | null;
 }
 
 export const DefineMsgsync: DefineModel<Msgsync> = {
@@ -46,7 +46,7 @@ export const DefineMsgsync: DefineModel<Msgsync> = {
       allowNull: false,
     },
     type: {
-      type: STRING(16),
+      type: INTEGER,
     },
   },
   Sample: {
@@ -108,11 +108,12 @@ export const DefineMsgsync: DefineModel<Msgsync> = {
               - length: 18
               - token: []
           type:
-            type: string
+            type: number
             isSchema: true
             allowEmpty: "null"
             limitation:
-              - max: 16
+              - integer: []
+              - min: 0
     `),
 };
 

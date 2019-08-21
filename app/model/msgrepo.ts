@@ -10,7 +10,7 @@ export interface Msgrepo {
   deDuplicate: string;
   msgId: number;
   senderId: string;
-  type: string | null;
+  type: number | null;
 }
 
 // TODO: check the usage of indexes (created by primary key) with sequelize
@@ -42,7 +42,7 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
       allowNull: false,
     },
     type: {
-      type: STRING(16),
+      type: INTEGER,
     },
   },
   Sample: {
@@ -97,11 +97,12 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
               - length: 18
               - token: []
           type:
-            type: string
+            type: number
             isSchema: true
             allowEmpty: "null"
             limitation:
-              - max: 16
+              - integer: []
+              - min: 0
     `),
 };
 

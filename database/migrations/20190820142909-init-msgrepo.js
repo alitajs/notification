@@ -30,7 +30,7 @@ module.exports = {
         allowNull: false,
       },
       type: {
-        type: STRING(16),
+        type: INTEGER,
       },
     });
     await queryInterface.addConstraint('Msgrepo', ['chatId', 'msgId'], {
