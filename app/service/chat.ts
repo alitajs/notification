@@ -34,6 +34,9 @@ export default class ChatService extends Service {
     }));
   }
 
+  /**
+   * @deprecated
+   */
   public async getMsgUnreadAccounts(chatId: string, msgId: number) {
     const attrs = validateAttr(DefineChat, { chatId, readedMsgId: msgId });
     const accounts = await this.ctx.model.Chat.findAll({

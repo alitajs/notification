@@ -1,6 +1,6 @@
-import { DefineChat } from '@/model/chat';
+import { Chat, DefineChat } from '@/model/chat';
 import { validateAttr, validatePagination } from '@/utils';
-import { AccessDeny } from '@/utils/errorcode';
+import { AccessDeny, NotFound } from '@/utils/errorcode';
 import { Controller } from 'egg';
 import sequelize from 'sequelize';
 
@@ -14,11 +14,10 @@ export default class ChatController extends Controller {
   public async getAllChatMembers() {
     const { accountId } = this.ctx.request;
     const { chatId } = this.ctx.params;
-    const isChatMember = await this.service.chat.isChatMember(accountId!, chatId);
-    if (!isChatMember)
-      throw new AccessDeny(`\`${accountId}\` is not a member of chat \`${chatId}\``);
-    const members = await this.service.chat.getAllChatMembers(chatId);
-    this.ctx.body = members.map(chat => this.app.lodash.omit(chat.get(), 'chatId'));
+    const instances = await this.service.chat.getAllChatMembers(chatId);
+    const members = instances.map(chat => this.app.lodash.omit(chat.get(), 'chatId'));
+    await this.checkIsChatMember(accountId, chatId, members);
+    this.ctx.body = members;
   }
 
   public async getAllUnreadCounts() {
@@ -28,11 +27,17 @@ export default class ChatController extends Controller {
 
   public async getMsgUnreadAccounts() {
     const { accountId } = this.ctx.request;
-    const { chatId, msgId } = this.ctx.params;
-    const isChatMember = await this.service.chat.isChatMember(accountId!, chatId);
-    if (!isChatMember)
-      throw new AccessDeny(`\`${accountId}\` is not a member of chat \`${chatId}\``);
-    this.ctx.body = await this.service.chat.getMsgUnreadAccounts(chatId, msgId);
+    const { chatId } = this.ctx.params;
+    // await this.checkIsChatMember(accountId, chatId);
+    // this.ctx.body = await this.service.chat.getMsgUnreadAccounts(chatId, msgId);
+    const { readedMsgId } = validateAttr<Chat, Pick<Chat, 'readedMsgId'>>(DefineChat, {
+      readedMsgId: this.ctx.params.msgId,
+    });
+    const instances = (await this.service.chat.getAllChatMembers(chatId)).map(chat => chat.get());
+    await this.checkIsChatMember(accountId, chatId, instances);
+    this.ctx.body = instances
+      .filter(member => member.readedMsgId < readedMsgId)
+      .map(member => member.accountId);
   }
 
   public async getUnreadCount() {
@@ -54,11 +59,11 @@ export default class ChatController extends Controller {
   public async listChatMembers() {
     const { accountId } = this.ctx.request;
     const { chatId } = this.ctx.params;
-    const isChatMember = await this.service.chat.isChatMember(accountId!, chatId);
-    if (!isChatMember)
-      throw new AccessDeny(`\`${accountId}\` is not a member of chat \`${chatId}\``);
     const { limit = 10, offset } = validatePagination(this.ctx, this.ctx.query);
-    const lists = await this.service.chat.listChatMembers(chatId, limit, offset);
+    const [lists] = await Promise.all([
+      this.service.chat.listChatMembers(chatId, limit, offset),
+      this.checkIsChatMember(accountId, chatId),
+    ]);
     this.ctx.body = {
       count: lists.count,
       rows: lists.rows.map(chat => this.app.lodash.omit(chat.get(), 'chatId')),
@@ -105,5 +110,18 @@ export default class ChatController extends Controller {
 
   public async removeChatMember() {
     // TODO: chat admin
+  }
+
+  private async checkIsChatMember(
+    accountId: string | null,
+    chatId: string,
+    members?: Pick<Chat, 'accountId'>[],
+  ) {
+    if (!accountId) throw new NotFound('account does not exists');
+    const isChatMember = members
+      ? members.some(member => member.accountId === accountId)
+      : await this.service.chat.isChatMember(accountId!, chatId);
+    if (!isChatMember)
+      throw new AccessDeny(`\`${accountId}\` is not a member of chat \`${chatId}\``);
   }
 }
