@@ -5,10 +5,10 @@
   "scripts": {
     "start": "egg-scripts start --daemon --title=egg-server-notification",
     "stop": "egg-scripts stop --title=egg-server-notification",
-    "start:prod": "egg-scripts start --daemon --title=egg-server-notification --stdout=$HOME/logs/notification/master-stdout.log --stderr=$HOME/logs/notification/master-stderr.log",
     "start:mysql": "sudo service mysql start",
     "start:redis": "sudo redis-server /etc/redis-5.0.5/redis.conf",
     "start:migrate": "cross-env NODE_ENV=production sequelize db:migrate",
+    "restart:tsc": "npm run stop && npm run tsc && npm run start",
     "dev": "egg-bin dev",
     "debug": "egg-bin debug",
     "test-local": "egg-bin test",

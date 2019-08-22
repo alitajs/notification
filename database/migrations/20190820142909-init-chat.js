@@ -17,7 +17,7 @@ module.exports = {
         allowNull: false,
         defaultValue: 0,
       },
-      readedMsgId: {
+      readMsgId: {
         type: INTEGER,
         allowNull: false,
         defaultValue: 0,

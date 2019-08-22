@@ -30,13 +30,13 @@ export default class ChatController extends Controller {
     const { chatId } = this.ctx.params;
     // await this.checkIsChatMember(accountId, chatId);
     // this.ctx.body = await this.service.chat.getMsgUnreadAccounts(chatId, msgId);
-    const { readedMsgId } = validateAttr<Chat, Pick<Chat, 'readedMsgId'>>(DefineChat, {
-      readedMsgId: this.ctx.params.msgId,
+    const { readMsgId } = validateAttr<Chat, Pick<Chat, 'readMsgId'>>(DefineChat, {
+      readMsgId: this.ctx.params.msgId,
     });
     const instances = (await this.service.chat.getAllChatMembers(chatId)).map(chat => chat.get());
     await this.checkIsChatMember(accountId, chatId, instances);
     this.ctx.body = instances
-      .filter(member => member.readedMsgId < readedMsgId)
+      .filter(member => member.readMsgId < readMsgId)
       .map(member => member.accountId);
   }
 
@@ -74,7 +74,7 @@ export default class ChatController extends Controller {
     const { accountId } = this.ctx.request;
     const attrs = validateAttr(DefineChat, { accountId });
     await this.ctx.model.Chat.update(
-      { readedMsgId: (sequelize.literal('`maxMsgId`') as unknown) as number },
+      { readMsgId: (sequelize.literal('`maxMsgId`') as unknown) as number },
       { where: { accountId: attrs.accountId! } },
     );
     return 'OK';
@@ -85,7 +85,7 @@ export default class ChatController extends Controller {
     const { chatId } = this.ctx.params;
     const attrs = validateAttr(DefineChat, { accountId, chatId });
     await this.ctx.model.Chat.update(
-      { readedMsgId: (sequelize.literal('`maxMsgId`') as unknown) as number },
+      { readMsgId: (sequelize.literal('`maxMsgId`') as unknown) as number },
       { where: { chatId: attrs.chatId, accountId: attrs.accountId! } },
     );
     return 'OK';
@@ -96,7 +96,7 @@ export default class ChatController extends Controller {
     const { chatId } = this.ctx.params;
     const attrs = validateAttr(DefineChat, { accountId, chatId });
     await this.ctx.model.Chat.update(
-      { readedMsgId: (sequelize.literal('(`maxMsgId` - 1)') as unknown) as number },
+      { readMsgId: (sequelize.literal('(`maxMsgId` - 1)') as unknown) as number },
       {
         where: {
           chatId: attrs.chatId,

@@ -8,7 +8,7 @@ export interface Chat {
   accountId: string;
   chatId: string;
   maxMsgId: number;
-  readedMsgId: number;
+  readMsgId: number;
 }
 
 export const DefineChat: DefineModel<Chat> = {
@@ -26,7 +26,7 @@ export const DefineChat: DefineModel<Chat> = {
       allowNull: false,
       defaultValue: 0,
     },
-    readedMsgId: {
+    readMsgId: {
       type: INTEGER,
       allowNull: false,
       defaultValue: 0,
@@ -36,7 +36,7 @@ export const DefineChat: DefineModel<Chat> = {
     accountId: 'abcdefghijklmnopqr',
     chatId: 'abcdefghijklmnopqrstuv',
     maxMsgId: 0,
-    readedMsgId: 0,
+    readMsgId: 0,
   },
   Validator: yamlJoi(`
     type: object
@@ -61,7 +61,7 @@ export const DefineChat: DefineModel<Chat> = {
             limitation:
               - integer: []
               - min: 0
-          readedMsgId:
+          readMsgId:
             type: number
             isSchema: true
             limitation:

@@ -5,7 +5,11 @@ import { Service } from 'egg';
 import sequelize from 'sequelize';
 
 /**
- * Service of chat
+ * manage meta informations of chats
+ * - members of specific chat
+ * - chats of specific account
+ * - unread counts
+ * - mark read progress
  */
 export default class ChatService extends Service {
   public getAllAccountChats(accountId: string) {
@@ -22,11 +26,8 @@ export default class ChatService extends Service {
     const calculateResultKey = 'unread';
     const where = validateAttr(DefineChat, { accountId });
     const instances = await this.ctx.model.Chat.findAll({
-      where: { ...where, maxMsgId: { [sequelize.Op.gt]: sequelize.col('readedMsgId') } },
-      attributes: [
-        'chatId',
-        [sequelize.literal('(`maxMsgId` - `readedMsgId`)'), calculateResultKey],
-      ],
+      where: { ...where, maxMsgId: { [sequelize.Op.gt]: sequelize.col('readMsgId') } },
+      attributes: ['chatId', [sequelize.literal('(`maxMsgId` - `readMsgId`)'), calculateResultKey]],
     });
     return instances.map(instance => ({
       chatId: instance.get('chatId') as string,
@@ -38,12 +39,12 @@ export default class ChatService extends Service {
    * @deprecated
    */
   public async getMsgUnreadAccounts(chatId: string, msgId: number) {
-    const attrs = validateAttr(DefineChat, { chatId, readedMsgId: msgId });
+    const attrs = validateAttr(DefineChat, { chatId, readMsgId: msgId });
     const accounts = await this.ctx.model.Chat.findAll({
       attributes: ['accountId'],
       where: {
         chatId: attrs.chatId,
-        readedMsgId: { [sequelize.Op.lt]: attrs.readedMsgId },
+        readMsgId: { [sequelize.Op.lt]: attrs.readMsgId },
       },
     });
     return accounts.map(account => account.get().accountId);
@@ -54,8 +55,8 @@ export default class ChatService extends Service {
     const instance = await this.ctx.model.Chat.findOne({ where });
     if (!instance) return 0;
     const maxMsgId: number = instance.get('maxMsgId') || 0;
-    const readedMsgId: number = instance.get('readedMsgId') || 0;
-    return Math.max(maxMsgId - readedMsgId, 0);
+    const readMsgId: number = instance.get('readMsgId') || 0;
+    return Math.max(maxMsgId - readMsgId, 0);
   }
 
   public async insertMember(chatId: string, accountId: string) {
@@ -90,11 +91,8 @@ export default class ChatService extends Service {
     const findResult = await this.ctx.model.Chat.findAndCountAll({
       limit,
       offset,
-      where: { ...where, maxMsgId: { [sequelize.Op.gt]: sequelize.col('readedMsgId') } },
-      attributes: [
-        'chatId',
-        [sequelize.literal('(`maxMsgId` - `readedMsgId`)'), calculateResultKey],
-      ],
+      where: { ...where, maxMsgId: { [sequelize.Op.gt]: sequelize.col('readMsgId') } },
+      attributes: ['chatId', [sequelize.literal('(`maxMsgId` - `readMsgId`)'), calculateResultKey]],
     });
     return {
       count: findResult.count,
@@ -123,15 +121,15 @@ export default class ChatService extends Service {
   public updateChatMsgId(chatId: string, maxMsgId: number) {
     const attrs = validateAttr(DefineChat, { chatId, maxMsgId });
     return this.ctx.model.Chat.update(
-      { readedMsgId: attrs.maxMsgId },
+      { readMsgId: attrs.maxMsgId },
       { where: { chatId: attrs.chatId } },
     );
   }
 
-  public updateReadedMsg(chatId: string, accountId: string, readedMsgId: number) {
-    const attrs = validateAttr(DefineChat, { accountId, chatId, readedMsgId });
+  public updateReadMsg(chatId: string, accountId: string, readMsgId: number) {
+    const attrs = validateAttr(DefineChat, { accountId, chatId, readMsgId });
     return this.ctx.model.Chat.update(
-      { readedMsgId: attrs.readedMsgId },
+      { readMsgId: attrs.readMsgId },
       { where: { chatId: attrs.chatId, accountId: attrs.accountId } },
     );
   }
