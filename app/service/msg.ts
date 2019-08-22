@@ -1,7 +1,8 @@
 import { DefineMsgrepo, Msgrepo } from '@/model/msgrepo';
 import { DefineMsgsync, Msgsync } from '@/model/msgsync';
-import { validateAttr } from '@/utils';
+import { validateAttr, validateModel } from '@/utils';
 // import { NotFound } from '@/utils/errorcode';
+import { ArgsType } from '@/utils/types';
 import { Service } from 'egg';
 import { Op } from 'sequelize';
 
@@ -18,6 +19,9 @@ export default class MsgService extends Service {
   static MsgSyncChunk = 500;
   static RedisKey = {
     MsgId: (chatId: string) => `msgid:${chatId}`,
+  };
+  static RetryTimes = {
+    SendMsg: 3,
   };
 
   /**
@@ -92,6 +96,69 @@ export default class MsgService extends Service {
     }
   }
 
+  public async sendMsg(
+    chatId: string,
+    content: string,
+    deDuplicate: string,
+    createTime: number,
+    type: number | null = null,
+    senderId: string = this.ctx.request.accountId!,
+  ) {
+    /** validate first and then generate message id */
+    const msgInstance: Msgrepo = validateModel(DefineMsgrepo, {
+      chatId,
+      content,
+      createTime,
+      deDuplicate,
+      senderId,
+      type,
+    });
+    msgInstance.msgId = await this.getNextMsgId(chatId);
+    this.insertMsgSync(msgInstance).catch(error => {
+      /** insert failed */
+      this.ctx.logger.error(error);
+    });
+    await this.ctx.model.Msgrepo.create(msgInstance).catch(error =>
+      this.retry(
+        MsgService.RetryTimes.SendMsg,
+        this.retryInsertMsgrepo,
+        error,
+        chatId,
+        content,
+        deDuplicate,
+        createTime,
+        type,
+        senderId,
+      ),
+    );
+    return msgInstance;
+  }
+
+  public async retryInsertMsgrepo(
+    chatId: string,
+    content: string,
+    deDuplicate: string,
+    createTime: number,
+    type: number | null = null,
+    senderId: string = this.ctx.request.accountId!,
+  ) {
+    const where = validateAttr(DefineMsgrepo, { chatId, createTime, deDuplicate });
+    const alreadyExistsOne = await this.ctx.model.Msgrepo.findOne({
+      attributes: { exclude: Object.keys(where) },
+      where,
+    });
+    if (alreadyExistsOne) return { ...alreadyExistsOne.get(), ...where } as Msgrepo;
+
+    const unverifiedAttrs = validateAttr(DefineMsgrepo, { content, senderId, type });
+    const msgInstance: Msgrepo = {
+      ...where,
+      ...unverifiedAttrs,
+      msgId: await this.getNextMsgId(chatId),
+    };
+    await this.ctx.model.Msgrepo.create(msgInstance);
+    return msgInstance;
+  }
+
   private getNextMsgIdFromRedis(chatId: string) {
     return this.app.redis.incrx([chatId], MsgService.MsgIdRedisExpire);
   }
@@ -103,5 +170,21 @@ export default class MsgService extends Service {
       where: { chatId },
     });
     return msgrepo ? msgrepo.get('msgId') : 0;
+  }
+
+  private async retry<T extends (...args: any[]) => any, U = any>(
+    times: number,
+    func: T,
+    retryFailed: U,
+    ...args: ArgsType<T>
+  ): Promise<ReturnType<T>> {
+    while (times--) {
+      try {
+        return await func(...args);
+      } catch (retryError) {
+        this.ctx.logger.error(retryError);
+      }
+    }
+    throw retryFailed;
   }
 }

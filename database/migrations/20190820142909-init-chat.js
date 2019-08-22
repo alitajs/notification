@@ -3,7 +3,7 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     const { CHAR, INTEGER } = Sequelize;
-    await queryInterface.createTable('Chats', {
+    await queryInterface.createTable('Chat', {
       accountId: {
         type: CHAR(18),
         allowNull: false,
@@ -23,11 +23,15 @@ module.exports = {
         defaultValue: 0,
       },
     });
-    await queryInterface.addIndex('Chats', { name: 'accountIdIndex', fields: ['accountId'] });
-    await queryInterface.addIndex('Chats', { name: 'chatIdIndex', fields: ['chatId'] });
+    // await queryInterface.addConstraint('Chat', ['chatId', 'accountId'], {
+    //   type: 'primary key',
+    //   name: 'PrimaryKey',
+    // });
+    await queryInterface.addIndex('Chat', { name: 'accountIdIndex', fields: ['accountId'] });
+    await queryInterface.addIndex('Chat', { name: 'chatIdIndex', fields: ['chatId'] });
   },
 
   down: async queryInterface => {
-    await queryInterface.dropTable('Chats');
+    await queryInterface.dropTable('Chat');
   },
 };
