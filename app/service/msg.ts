@@ -1,8 +1,7 @@
 import { DefineMsgrepo, Msgrepo } from '@/model/msgrepo';
 import { DefineMsgsync, Msgsync } from '@/model/msgsync';
-import { validateAttr, validateModel } from '@/utils';
+import { retryAsync, validateAttr, validateModel } from '@/utils';
 // import { NotFound } from '@/utils/errorcode';
-import { ArgsType } from '@/utils/types';
 import { Service } from 'egg';
 import { Op } from 'sequelize';
 
@@ -21,7 +20,7 @@ export default class MsgService extends Service {
     MsgId: (chatId: string) => `msgid:${chatId}`,
   };
   static RetryTimes = {
-    SendMsg: 3,
+    SendMsg: 1,
   };
 
   /**
@@ -119,16 +118,11 @@ export default class MsgService extends Service {
       this.ctx.logger.error(error);
     });
     await this.ctx.model.Msgrepo.create(msgInstance).catch(error =>
-      this.retry(
+      retryAsync(
         MsgService.RetryTimes.SendMsg,
         this.retryInsertMsgrepo,
-        error,
-        chatId,
-        content,
-        deDuplicate,
-        createTime,
-        type,
-        senderId,
+        [chatId, content, deDuplicate, createTime, type, senderId],
+        { throwOnAllFailed: error },
       ),
     );
     return msgInstance;
@@ -170,21 +164,5 @@ export default class MsgService extends Service {
       where: { chatId },
     });
     return msgrepo ? msgrepo.get('msgId') : 0;
-  }
-
-  private async retry<T extends (...args: any[]) => any, U = any>(
-    times: number,
-    func: T,
-    retryFailed: U,
-    ...args: ArgsType<T>
-  ): Promise<ReturnType<T>> {
-    while (times--) {
-      try {
-        return await func(...args);
-      } catch (retryError) {
-        this.ctx.logger.error(retryError);
-      }
-    }
-    throw retryFailed;
   }
 }

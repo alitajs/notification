@@ -6,7 +6,7 @@ import { pick, Dictionary } from 'lodash';
 import { getObjectSearchKeys } from 'object-search-key';
 import { WhereOptions } from 'sequelize';
 import yamlJoi, { JoiSchema } from 'yaml-joi';
-import { DefineModel, DefineModelAttr } from './types';
+import { ArgsType, DefineModel, DefineModelAttr } from './types';
 
 export { changeRadix };
 export { default as ErrCode } from './errorcode';
@@ -173,4 +173,27 @@ export function generateSearchOr<T>(
     [] as Dictionary<string | number>[],
   );
   return or as WhereOptions<T>[];
+}
+
+export async function retryAsync<
+  T extends (...args: any[]) => any,
+  F = undefined,
+  U = any,
+  R extends (error: any) => void = (error: any) => void
+>(
+  times: number,
+  func: T,
+  args: ArgsType<T>,
+  options: { fallback?: F; onRetryThrow?: R; throwOnAllFailed?: U } = {},
+): Promise<ReturnType<T> | F> {
+  while (times--) {
+    try {
+      return await func(...args);
+    } catch (error) {
+      if (!options.onRetryThrow) continue;
+      options.onRetryThrow(error);
+    }
+  }
+  if (options.throwOnAllFailed) throw options.throwOnAllFailed;
+  return options.fallback!;
 }
