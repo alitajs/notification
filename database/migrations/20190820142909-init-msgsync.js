@@ -12,7 +12,7 @@ module.exports = {
         type: TEXT,
         allowNull: false,
       },
-      createTime: {
+      creationTime: {
         type: INTEGER,
         allowNull: false,
       },
@@ -42,7 +42,7 @@ module.exports = {
     });
     await queryInterface.addIndex('Msgsync', {
       name: 'receivedMsg',
-      fields: ['recipientId', 'createTime'],
+      fields: ['recipientId', 'creationTime'],
     });
   },
 

@@ -6,7 +6,7 @@ import yamlJoi from 'yaml-joi';
 export interface Msgrepo {
   chatId: string;
   content: string;
-  createTime: number;
+  creationTime: number;
   deDuplicate: string;
   msgId: number;
   senderId: string;
@@ -24,7 +24,7 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
       type: TEXT,
       allowNull: false,
     },
-    createTime: {
+    creationTime: {
       type: INTEGER,
       allowNull: false,
     },
@@ -47,7 +47,7 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
   Sample: {
     chatId: 'abcdefghijklmnopqrstuv',
     content: '',
-    createTime: 0,
+    creationTime: 0,
     deDuplicate: '',
     msgId: 0,
     senderId: 'abcdefghijklmnopqr',
@@ -70,7 +70,7 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
             limitation:
               - max: 65535
               - allow: ""
-          createTime:
+          creationTime:
             type: number
             isSchema: true
             limitation:
@@ -109,7 +109,7 @@ export default (app: Application) =>
   app.model.define<Instance<Msgrepo>, Msgrepo>('Msgrepo', DefineMsgrepo.Attr, {
     indexes: [
       { name: 'PrimaryKey', unique: true, fields: ['chatId', 'msgId'] },
-      { name: 'msgCreateTime', fields: ['chatId', 'createTime'] },
-      // { name: 'msgCreateTime', fields: ['chatId', 'createTime', 'deDuplicate'], unique: true },
+      { name: 'msgCreationTime', fields: ['chatId', 'creationTime'] },
+      // { name: 'msgCreationTime', fields: ['chatId', 'creationTime', 'deDuplicate'], unique: true },
     ],
   });

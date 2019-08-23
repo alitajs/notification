@@ -57,6 +57,7 @@ export default class MsgService extends Service {
     const attrs = validateAttr(DefineMsgrepo, { chatId, msgId: afterMsgId });
     return this.ctx.model.Msgrepo.findAll({
       limit,
+      order: [['msgId', 'ASC']],
       where: {
         chatId: attrs.chatId,
         msgId: { [Op.gt]: attrs.msgId },
@@ -70,12 +71,13 @@ export default class MsgService extends Service {
    * Use `afterTime` instead of `offset`.
    */
   public listChatHistoryMsgsByTime(chatId: string, afterTime: number, limit?: number) {
-    const attrs = validateAttr(DefineMsgrepo, { chatId, createTime: afterTime });
+    const attrs = validateAttr(DefineMsgrepo, { chatId, creationTime: afterTime });
     return this.ctx.model.Msgrepo.findAll({
       limit,
+      order: [['creationTime', 'ASC']],
       where: {
         chatId: attrs.chatId,
-        createTime: { [Op.gt]: attrs.createTime },
+        creationTime: { [Op.gt]: attrs.creationTime },
       },
     });
   }
@@ -84,15 +86,31 @@ export default class MsgService extends Service {
    * List the recent message records of an account.
    * @description
    * Use `afterTime` instead of `offset`.
+   * Can be used to get all messages after a certain `creationTime` in full.
    */
   public listRecentMsgs(recipientId: string, afterTime?: number, limit?: number) {
-    const attrs = validateAttr(DefineMsgsync, { createTime: afterTime || 0, recipientId });
+    const attrs = validateAttr(DefineMsgsync, { creationTime: afterTime || 0, recipientId });
     return this.ctx.model.Msgsync.findAll({
       limit,
+      order: [['creationTime', 'ASC']],
       where: {
         recipientId: attrs.recipientId,
-        createTime: { [Op.gt]: attrs.createTime },
+        creationTime: { [Op.gt]: attrs.creationTime },
       },
+    });
+  }
+
+  /**
+   * List the recent message records of an account quantitatively.
+   * @description
+   * This function will find messages in order of `creationTime` from large to small.
+   */
+  public listRecentMsgsQuantitatively(recipientId: string, limit?: number) {
+    recipientId = validateAttr(DefineMsgsync, { recipientId }).recipientId;
+    return this.ctx.model.Msgsync.findAll({
+      limit,
+      order: [['creationTime', 'DESC']],
+      where: { recipientId },
     });
   }
 
@@ -100,7 +118,7 @@ export default class MsgService extends Service {
    * Resend one message.
    * @description
    * Check whether the message has been successfully written to the message persistent repository
-   * according to `createTime` and `deDuplicate` first, and then rewrite it if not. Whether it has
+   * according to `creationTime` and `deDuplicate` first, and then rewrite it if not. Whether it has
    * been successfully written before or not, it will rewrite to the message synchronization repository
    * asynchronously (ignoring duplicate data).
    */
@@ -108,14 +126,14 @@ export default class MsgService extends Service {
     chatId: string,
     content: string,
     deDuplicate: string,
-    createTime: number,
+    creationTime: number,
     type: number | null = null,
     senderId: string = this.ctx.request.accountId!,
   ) {
     const msgrepo: Msgrepo = validateModel(DefineMsgrepo, {
       chatId,
       content,
-      createTime,
+      creationTime,
       deDuplicate,
       senderId,
       type,
@@ -141,7 +159,7 @@ export default class MsgService extends Service {
     chatId: string,
     content: string,
     deDuplicate: string,
-    createTime: number,
+    creationTime: number,
     type: number | null = null,
     senderId: string = this.ctx.request.accountId!,
   ) {
@@ -149,7 +167,7 @@ export default class MsgService extends Service {
     const msgrepo: Msgrepo = validateModel(DefineMsgrepo, {
       chatId,
       content,
-      createTime,
+      creationTime,
       deDuplicate,
       senderId,
       type,
@@ -163,9 +181,9 @@ export default class MsgService extends Service {
   /** private methods */
 
   private async findMsgrepoByDeDuplicateString(
-    where: Pick<Msgrepo, 'chatId' | 'createTime' | 'deDuplicate'>,
+    where: Pick<Msgrepo, 'chatId' | 'creationTime' | 'deDuplicate'>,
   ) {
-    where = this.app.lodash.pick(where, 'chatId', 'createTime', 'deDuplicate');
+    where = this.app.lodash.pick(where, 'chatId', 'creationTime', 'deDuplicate');
     const instanceOrNull = await this.ctx.model.Msgrepo.findOne({
       attributes: { exclude: Object.keys(where) },
       where,
@@ -206,6 +224,9 @@ export default class MsgService extends Service {
    * `MsgService.RetryTimes.InsertMsgrepo` times if it failed, and throw error if all failed.
    */
   private async insertMsgrepo(msgrepo: Msgrepo) {
+    /**
+     * Notice the difference between `return` and `return await`.
+     */
     try {
       return await this.ctx.model.Msgrepo.create(msgrepo);
     } catch (error) {
@@ -220,29 +241,21 @@ export default class MsgService extends Service {
 
   /**
    * Write asynchronously to the message synchronization repository and isolate errors.
+   * @returns `isReadSpread`
    */
-  private async protectedInsertMsgsync(msgrepo: Msgrepo) {
-    // const members = await this.ctx.model.Chat.findAll({
-    //   attributes: ['accountId'],
-    //   where: { chatId: msgrepo.chatId },
-    // });
-    // const chunk = this.app.lodash.chunk(members, MsgService.MsgsyncChunk);
+  private async protectedInsertMsgsync(msgrepo: Msgrepo): Promise<boolean> {
+    if (await this.service.spread.isReadSpread(msgrepo.chatId)) {
+      return true;
+    }
     // for (const part of chunk) {
-    //   try {
-    //     const records: Msgsync[] = part.map(member => ({
-    //       ...msgrepo,
-    //       recipientId: member.get('accountId'),
-    //     }));
-    //     await this.ctx.model.Msgsync.bulkCreate(records, { ignoreDuplicates: true });
-    //   } catch (error) {
-    //     this.ctx.logger.error(error);
-    //   }
+    //   try { ... } catch (error) { ... }
     // }
     try {
-      return this.insertMsgsync(msgrepo);
+      await this.insertMsgsync(msgrepo);
     } catch (error) {
-      return this.ctx.logger.error(error);
+      this.ctx.logger.error(error);
     }
+    return false;
   }
 
   private async retryInsertMsgrepo(messageOmitMsgId: Omit<Msgrepo, 'msgId'>) {

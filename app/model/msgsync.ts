@@ -37,7 +37,7 @@ export const DefineMsgsync: DefineModel<Msgsync> = {
             limitation:
               - max: 65535
               - allow: ""
-          createTime:
+          creationTime:
             type: number
             isSchema: true
             limitation:
@@ -81,9 +81,9 @@ export const DefineMsgsync: DefineModel<Msgsync> = {
 export default (app: Application) =>
   app.model.define<Instance<Msgsync>, Msgsync>('Msgsync', DefineMsgsync.Attr, {
     // use index `receivedMsg` in mysql event:
-    // DELETE FROM `Msgsync` WHERE `recipientId` > '' AND `createTime` < 1234567890000;
+    // DELETE FROM `Msgsync` WHERE `recipientId` > '' AND `creationTime` < 1234567890000;
     indexes: [
-      { name: 'receivedMsg', fields: ['recipientId', 'createTime'] },
+      { name: 'receivedMsg', fields: ['recipientId', 'creationTime'] },
       { name: 'PrimaryKey', unique: true, fields: ['recipientId', 'chatId', 'msgId'] },
     ],
   });

@@ -12,7 +12,7 @@ module.exports = {
         type: TEXT,
         allowNull: false,
       },
-      createTime: {
+      creationTime: {
         type: INTEGER,
         allowNull: false,
       },
@@ -37,8 +37,8 @@ module.exports = {
       name: 'PrimaryKey',
     });
     await queryInterface.addIndex('Msgrepo', {
-      name: 'msgCreateTime',
-      fields: ['chatId', 'createTime'],
+      name: 'msgCreationTime',
+      fields: ['chatId', 'creationTime'],
     });
   },
 
