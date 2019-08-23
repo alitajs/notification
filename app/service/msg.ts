@@ -15,12 +15,12 @@ export const enum MsgType {
  */
 export default class MsgService extends Service {
   static MsgIdRedisExpire = 7 * 24 * 60 * 60;
-  static MsgSyncChunk = 500;
+  static MsgsyncChunk = 500;
   static RedisKey = {
     MsgId: (chatId: string) => `msgid:${chatId}`,
   };
   static RetryTimes = {
-    SendMsg: 1,
+    InsertMsgrepo: 1,
   };
 
   /**
@@ -80,18 +80,38 @@ export default class MsgService extends Service {
     });
   }
 
-  public async insertMsgSync(message: Msgrepo) {
+  public async insertMsgsync(message: Msgrepo) {
     const members = await this.ctx.model.Chat.findAll({
       attributes: ['accountId'],
       where: { chatId: message.chatId },
     });
-    const chunk = this.app.lodash.chunk(members, MsgService.MsgSyncChunk);
+    const chunk = this.app.lodash.chunk(members, MsgService.MsgsyncChunk);
     for (const part of chunk) {
       const records: Msgsync[] = part.map(member => ({
         ...message,
         recipientId: member.get('accountId'),
       }));
       await this.ctx.model.Msgsync.bulkCreate(records, { ignoreDuplicates: true });
+    }
+  }
+
+  public async insertMsgrepo(message: Msgrepo) {
+    try {
+      return await this.ctx.model.Msgrepo.create(message);
+    } catch (error) {
+      return await retryAsync(
+        MsgService.RetryTimes.InsertMsgrepo,
+        this.retryInsertMsgrepo,
+        [
+          message.chatId,
+          message.content,
+          message.deDuplicate,
+          message.createTime,
+          message.type,
+          message.senderId,
+        ],
+        { throwOnAllFailed: error },
+      );
     }
   }
 
@@ -113,18 +133,34 @@ export default class MsgService extends Service {
       type,
     });
     msgInstance.msgId = await this.getNextMsgId(chatId);
-    this.insertMsgSync(msgInstance).catch(error => {
-      /** insert failed */
-      this.ctx.logger.error(error);
-    });
-    await this.ctx.model.Msgrepo.create(msgInstance).catch(error =>
-      retryAsync(
-        MsgService.RetryTimes.SendMsg,
-        this.retryInsertMsgrepo,
-        [chatId, content, deDuplicate, createTime, type, senderId],
-        { throwOnAllFailed: error },
-      ),
-    );
+    await this.insertMsgrepo(msgInstance);
+    this.protectedInsertMsgsync(msgInstance);
+    return msgInstance;
+  }
+
+  public async resendMsg(
+    chatId: string,
+    content: string,
+    deDuplicate: string,
+    createTime: number,
+    type: number | null = null,
+    senderId: string = this.ctx.request.accountId!,
+  ) {
+    const where = validateAttr(DefineMsgrepo, { chatId, createTime, deDuplicate });
+    const alreadyExistsOne = await this.findMsgrepoByDeDuplicateString(where);
+    if (alreadyExistsOne) {
+      this.protectedInsertMsgsync(alreadyExistsOne);
+      return alreadyExistsOne;
+    }
+
+    const unverifiedAttrs = validateAttr(DefineMsgrepo, { content, senderId, type });
+    const msgInstance: Msgrepo = {
+      ...where,
+      ...unverifiedAttrs,
+      msgId: await this.getNextMsgId(chatId),
+    };
+    await this.insertMsgrepo(msgInstance);
+    this.protectedInsertMsgsync(msgInstance);
     return msgInstance;
   }
 
@@ -137,11 +173,8 @@ export default class MsgService extends Service {
     senderId: string = this.ctx.request.accountId!,
   ) {
     const where = validateAttr(DefineMsgrepo, { chatId, createTime, deDuplicate });
-    const alreadyExistsOne = await this.ctx.model.Msgrepo.findOne({
-      attributes: { exclude: Object.keys(where) },
-      where,
-    });
-    if (alreadyExistsOne) return { ...alreadyExistsOne.get(), ...where } as Msgrepo;
+    const alreadyExistsOne = await this.findMsgrepoByDeDuplicateString(where);
+    if (alreadyExistsOne) return alreadyExistsOne;
 
     const unverifiedAttrs = validateAttr(DefineMsgrepo, { content, senderId, type });
     const msgInstance: Msgrepo = {
@@ -151,6 +184,18 @@ export default class MsgService extends Service {
     };
     await this.ctx.model.Msgrepo.create(msgInstance);
     return msgInstance;
+  }
+
+  private async findMsgrepoByDeDuplicateString(where: {
+    chatId: string;
+    createTime: number;
+    deDuplicate: string;
+  }) {
+    const instanceOrNull = await this.ctx.model.Msgrepo.findOne({
+      attributes: { exclude: Object.keys(where) },
+      where,
+    });
+    return instanceOrNull && ({ ...instanceOrNull.get(), ...where } as Msgrepo);
   }
 
   private getNextMsgIdFromRedis(chatId: string) {
@@ -164,5 +209,29 @@ export default class MsgService extends Service {
       where: { chatId },
     });
     return msgrepo ? msgrepo.get('msgId') : 0;
+  }
+
+  private async protectedInsertMsgsync(message: Msgrepo) {
+    // const members = await this.ctx.model.Chat.findAll({
+    //   attributes: ['accountId'],
+    //   where: { chatId: message.chatId },
+    // });
+    // const chunk = this.app.lodash.chunk(members, MsgService.MsgsyncChunk);
+    // for (const part of chunk) {
+    //   try {
+    //     const records: Msgsync[] = part.map(member => ({
+    //       ...message,
+    //       recipientId: member.get('accountId'),
+    //     }));
+    //     await this.ctx.model.Msgsync.bulkCreate(records, { ignoreDuplicates: true });
+    //   } catch (error) {
+    //     this.ctx.logger.error(error);
+    //   }
+    // }
+    try {
+      return this.insertMsgsync(message);
+    } catch (error) {
+      return this.ctx.logger.error(error);
+    }
   }
 }
