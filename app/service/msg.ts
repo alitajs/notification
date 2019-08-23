@@ -27,11 +27,11 @@ export default class MsgService extends Service {
   };
 
   /**
-   * get a strictly self-increasing message id.
+   * Get a strictly self-increasing message id.
    * @description
-   * try to get next id from *redis* by `INCR` command first, if it fails,
-   * the last message id will be found from the message repository and written to *redis*,
-   * and then get from *redis* by `INCR` command again.
+   * Try to get next id from *redis* by `INCR` command first, if it fails,
+   * the last message id will be found from the message persistent repository
+   * and written to *redis*, and then get from *redis* by `INCR` command again.
    */
   public async getNextMsgId(chatId: string) {
     chatId = validateAttr(DefineMsgrepo, { chatId }).chatId;
@@ -49,9 +49,9 @@ export default class MsgService extends Service {
   }
 
   /**
-   * list the history message records of a chat session after **specific message id**.
+   * List the history message records of a chat session after **specific message id**.
    * @description
-   * use `afterMsgId` instead of `offset`
+   * Use `afterMsgId` instead of `offset`.
    */
   public listChatHistoryMsgs(chatId: string, afterMsgId: number, limit?: number) {
     const attrs = validateAttr(DefineMsgrepo, { chatId, msgId: afterMsgId });
@@ -65,9 +65,9 @@ export default class MsgService extends Service {
   }
 
   /**
-   * list the history message records of a chat session after **specific create time**.
+   * List the history message records of a chat session after **specific create time**.
    * @description
-   * use `afterTime` instead of `offset`
+   * Use `afterTime` instead of `offset`.
    */
   public listChatHistoryMsgsByTime(chatId: string, afterTime: number, limit?: number) {
     const attrs = validateAttr(DefineMsgrepo, { chatId, createTime: afterTime });
@@ -81,9 +81,9 @@ export default class MsgService extends Service {
   }
 
   /**
-   * list the recent message records of an account.
+   * List the recent message records of an account.
    * @description
-   * use `afterTime` instead of `offset`
+   * Use `afterTime` instead of `offset`.
    */
   public listRecentMsgs(recipientId: string, afterTime?: number, limit?: number) {
     const attrs = validateAttr(DefineMsgsync, { createTime: afterTime || 0, recipientId });
@@ -96,6 +96,14 @@ export default class MsgService extends Service {
     });
   }
 
+  /**
+   * Resend one message.
+   * @description
+   * Check whether the message has been successfully written to the message persistent repository
+   * according to `createTime` and `deDuplicate` first, and then rewrite it if not. Whether it has
+   * been successfully written before or not, it will rewrite to the message synchronization repository
+   * asynchronously (ignoring duplicate data).
+   */
   public async resendMsg(
     chatId: string,
     content: string,
@@ -124,7 +132,10 @@ export default class MsgService extends Service {
   }
 
   /**
-   * send one message.
+   * Send one message.
+   * @description
+   * Try to write to the message persistent repository first, then asynchronously write to
+   * the message synchronization repository, and return the message instance.
    */
   public async sendMsg(
     chatId: string,
@@ -148,6 +159,8 @@ export default class MsgService extends Service {
     this.protectedInsertMsgsync(msgrepo);
     return msgrepo;
   }
+
+  /** private methods */
 
   private async findMsgrepoByDeDuplicateString(
     where: Pick<Msgrepo, 'chatId' | 'createTime' | 'deDuplicate'>,
@@ -188,6 +201,10 @@ export default class MsgService extends Service {
     }
   }
 
+  /**
+   * Write to the message persistent repository, retry
+   * `MsgService.RetryTimes.InsertMsgrepo` times if it failed, and throw error if all failed.
+   */
   private async insertMsgrepo(msgrepo: Msgrepo) {
     try {
       return await this.ctx.model.Msgrepo.create(msgrepo);
@@ -201,6 +218,9 @@ export default class MsgService extends Service {
     }
   }
 
+  /**
+   * Write asynchronously to the message synchronization repository and isolate errors.
+   */
   private async protectedInsertMsgsync(msgrepo: Msgrepo) {
     // const members = await this.ctx.model.Chat.findAll({
     //   attributes: ['accountId'],

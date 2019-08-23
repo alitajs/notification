@@ -5,7 +5,7 @@ import { Service } from 'egg';
 import sequelize from 'sequelize';
 
 /**
- * manage meta informations of chats
+ * Manage meta informations of chats:
  * - members of specific chat
  * - chats of specific account
  * - unread counts
