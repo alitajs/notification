@@ -11,7 +11,10 @@ export const enum MsgType {
 }
 
 /**
- * Service of message
+ * - list recent messages of an account
+ * - list messages history of a chat session
+ * - resend message
+ * - send message
  */
 export default class MsgService extends Service {
   static MsgIdRedisExpire = 7 * 24 * 60 * 60;
@@ -24,9 +27,33 @@ export default class MsgService extends Service {
   };
 
   /**
+   * get a strictly self-increasing message id.
+   * @description
+   * try to get next id from *redis* by `INCR` command first, if it fails,
+   * the last message id will be found from the message repository and written to *redis*,
+   * and then get from *redis* by `INCR` command again.
+   */
+  public async getNextMsgId(chatId: string) {
+    chatId = validateAttr(DefineMsgrepo, { chatId }).chatId;
+    let nextMsgId = await this.getNextMsgIdFromRedis(chatId);
+    if (!nextMsgId) {
+      /**
+       * do not increase `lastMsgId` by one and set to redis directly
+       * @deprecated
+       * await this.app.redis.set(chatId, lastMsgId + 1);
+       */
+      const lastMsgId = await this.getLastMsgIdFromRepo(chatId);
+      nextMsgId = await this.app.redis.incrsetnx([chatId], lastMsgId, MsgService.MsgIdRedisExpire);
+    }
+    return nextMsgId;
+  }
+
+  /**
+   * list the history message records of a chat session after **specific message id**.
+   * @description
    * use `afterMsgId` instead of `offset`
    */
-  public getChatHistoryMsgs(chatId: string, afterMsgId: number, limit?: number) {
+  public listChatHistoryMsgs(chatId: string, afterMsgId: number, limit?: number) {
     const attrs = validateAttr(DefineMsgrepo, { chatId, msgId: afterMsgId });
     return this.ctx.model.Msgrepo.findAll({
       limit,
@@ -38,9 +65,11 @@ export default class MsgService extends Service {
   }
 
   /**
+   * list the history message records of a chat session after **specific create time**.
+   * @description
    * use `afterTime` instead of `offset`
    */
-  public getChatHistoryMsgsByTime(chatId: string, afterTime: number, limit?: number) {
+  public listChatHistoryMsgsByTime(chatId: string, afterTime: number, limit?: number) {
     const attrs = validateAttr(DefineMsgrepo, { chatId, createTime: afterTime });
     return this.ctx.model.Msgrepo.findAll({
       limit,
@@ -51,25 +80,12 @@ export default class MsgService extends Service {
     });
   }
 
-  public async getNextMsgId(chatId: string) {
-    chatId = validateAttr(DefineMsgrepo, { chatId }).chatId;
-    let nextMsgId = await this.getNextMsgIdFromRedis(chatId);
-    if (!nextMsgId) {
-      const lastMsgId = await this.getLastMsgIdFromRepo(chatId);
-      /**
-       * do not increase `lastMsgId` by one and set to redis directly
-       * @deprecated
-       * await this.app.redis.set(chatId, lastMsgId + 1);
-       */
-      nextMsgId = await this.app.redis.incrsetnx([chatId], lastMsgId, MsgService.MsgIdRedisExpire);
-    }
-    return nextMsgId;
-  }
-
   /**
+   * list the recent message records of an account.
+   * @description
    * use `afterTime` instead of `offset`
    */
-  public getRecentMsgs(recipientId: string, afterTime?: number, limit?: number) {
+  public listRecentMsgs(recipientId: string, afterTime?: number, limit?: number) {
     const attrs = validateAttr(DefineMsgsync, { createTime: afterTime || 0, recipientId });
     return this.ctx.model.Msgsync.findAll({
       limit,
@@ -80,41 +96,36 @@ export default class MsgService extends Service {
     });
   }
 
-  public async insertMsgsync(message: Msgrepo) {
-    const members = await this.ctx.model.Chat.findAll({
-      attributes: ['accountId'],
-      where: { chatId: message.chatId },
+  public async resendMsg(
+    chatId: string,
+    content: string,
+    deDuplicate: string,
+    createTime: number,
+    type: number | null = null,
+    senderId: string = this.ctx.request.accountId!,
+  ) {
+    const msgrepo: Msgrepo = validateModel(DefineMsgrepo, {
+      chatId,
+      content,
+      createTime,
+      deDuplicate,
+      senderId,
+      type,
     });
-    const chunk = this.app.lodash.chunk(members, MsgService.MsgsyncChunk);
-    for (const part of chunk) {
-      const records: Msgsync[] = part.map(member => ({
-        ...message,
-        recipientId: member.get('accountId'),
-      }));
-      await this.ctx.model.Msgsync.bulkCreate(records, { ignoreDuplicates: true });
+    const alreadyExistsOne = await this.findMsgrepoByDeDuplicateString(msgrepo);
+    if (alreadyExistsOne) {
+      this.protectedInsertMsgsync(alreadyExistsOne);
+      return alreadyExistsOne;
     }
+    msgrepo.msgId = await this.getNextMsgId(chatId);
+    await this.insertMsgrepo(msgrepo);
+    this.protectedInsertMsgsync(msgrepo);
+    return msgrepo;
   }
 
-  public async insertMsgrepo(message: Msgrepo) {
-    try {
-      return await this.ctx.model.Msgrepo.create(message);
-    } catch (error) {
-      return await retryAsync(
-        MsgService.RetryTimes.InsertMsgrepo,
-        this.retryInsertMsgrepo,
-        [
-          message.chatId,
-          message.content,
-          message.deDuplicate,
-          message.createTime,
-          message.type,
-          message.senderId,
-        ],
-        { throwOnAllFailed: error },
-      );
-    }
-  }
-
+  /**
+   * send one message.
+   */
   public async sendMsg(
     chatId: string,
     content: string,
@@ -124,7 +135,7 @@ export default class MsgService extends Service {
     senderId: string = this.ctx.request.accountId!,
   ) {
     /** validate first and then generate message id */
-    const msgInstance: Msgrepo = validateModel(DefineMsgrepo, {
+    const msgrepo: Msgrepo = validateModel(DefineMsgrepo, {
       chatId,
       content,
       createTime,
@@ -132,65 +143,16 @@ export default class MsgService extends Service {
       senderId,
       type,
     });
-    msgInstance.msgId = await this.getNextMsgId(chatId);
-    await this.insertMsgrepo(msgInstance);
-    this.protectedInsertMsgsync(msgInstance);
-    return msgInstance;
+    msgrepo.msgId = await this.getNextMsgId(chatId);
+    await this.insertMsgrepo(msgrepo);
+    this.protectedInsertMsgsync(msgrepo);
+    return msgrepo;
   }
 
-  public async resendMsg(
-    chatId: string,
-    content: string,
-    deDuplicate: string,
-    createTime: number,
-    type: number | null = null,
-    senderId: string = this.ctx.request.accountId!,
+  private async findMsgrepoByDeDuplicateString(
+    where: Pick<Msgrepo, 'chatId' | 'createTime' | 'deDuplicate'>,
   ) {
-    const where = validateAttr(DefineMsgrepo, { chatId, createTime, deDuplicate });
-    const alreadyExistsOne = await this.findMsgrepoByDeDuplicateString(where);
-    if (alreadyExistsOne) {
-      this.protectedInsertMsgsync(alreadyExistsOne);
-      return alreadyExistsOne;
-    }
-
-    const unverifiedAttrs = validateAttr(DefineMsgrepo, { content, senderId, type });
-    const msgInstance: Msgrepo = {
-      ...where,
-      ...unverifiedAttrs,
-      msgId: await this.getNextMsgId(chatId),
-    };
-    await this.insertMsgrepo(msgInstance);
-    this.protectedInsertMsgsync(msgInstance);
-    return msgInstance;
-  }
-
-  public async retryInsertMsgrepo(
-    chatId: string,
-    content: string,
-    deDuplicate: string,
-    createTime: number,
-    type: number | null = null,
-    senderId: string = this.ctx.request.accountId!,
-  ) {
-    const where = validateAttr(DefineMsgrepo, { chatId, createTime, deDuplicate });
-    const alreadyExistsOne = await this.findMsgrepoByDeDuplicateString(where);
-    if (alreadyExistsOne) return alreadyExistsOne;
-
-    const unverifiedAttrs = validateAttr(DefineMsgrepo, { content, senderId, type });
-    const msgInstance: Msgrepo = {
-      ...where,
-      ...unverifiedAttrs,
-      msgId: await this.getNextMsgId(chatId),
-    };
-    await this.ctx.model.Msgrepo.create(msgInstance);
-    return msgInstance;
-  }
-
-  private async findMsgrepoByDeDuplicateString(where: {
-    chatId: string;
-    createTime: number;
-    deDuplicate: string;
-  }) {
+    where = this.app.lodash.pick(where, 'chatId', 'createTime', 'deDuplicate');
     const instanceOrNull = await this.ctx.model.Msgrepo.findOne({
       attributes: { exclude: Object.keys(where) },
       where,
@@ -211,16 +173,44 @@ export default class MsgService extends Service {
     return msgrepo ? msgrepo.get('msgId') : 0;
   }
 
-  private async protectedInsertMsgsync(message: Msgrepo) {
+  private async insertMsgsync(msgrepo: Msgrepo) {
+    const members = await this.ctx.model.Chat.findAll({
+      attributes: ['accountId'],
+      where: { chatId: msgrepo.chatId },
+    });
+    const chunk = this.app.lodash.chunk(members, MsgService.MsgsyncChunk);
+    for (const part of chunk) {
+      const records: Msgsync[] = part.map(member => ({
+        ...msgrepo,
+        recipientId: member.get('accountId'),
+      }));
+      await this.ctx.model.Msgsync.bulkCreate(records, { ignoreDuplicates: true });
+    }
+  }
+
+  private async insertMsgrepo(msgrepo: Msgrepo) {
+    try {
+      return await this.ctx.model.Msgrepo.create(msgrepo);
+    } catch (error) {
+      return await retryAsync(
+        MsgService.RetryTimes.InsertMsgrepo,
+        this.retryInsertMsgrepo,
+        [msgrepo],
+        { throwOnAllFailed: error },
+      );
+    }
+  }
+
+  private async protectedInsertMsgsync(msgrepo: Msgrepo) {
     // const members = await this.ctx.model.Chat.findAll({
     //   attributes: ['accountId'],
-    //   where: { chatId: message.chatId },
+    //   where: { chatId: msgrepo.chatId },
     // });
     // const chunk = this.app.lodash.chunk(members, MsgService.MsgsyncChunk);
     // for (const part of chunk) {
     //   try {
     //     const records: Msgsync[] = part.map(member => ({
-    //       ...message,
+    //       ...msgrepo,
     //       recipientId: member.get('accountId'),
     //     }));
     //     await this.ctx.model.Msgsync.bulkCreate(records, { ignoreDuplicates: true });
@@ -229,9 +219,20 @@ export default class MsgService extends Service {
     //   }
     // }
     try {
-      return this.insertMsgsync(message);
+      return this.insertMsgsync(msgrepo);
     } catch (error) {
       return this.ctx.logger.error(error);
     }
+  }
+
+  private async retryInsertMsgrepo(messageOmitMsgId: Omit<Msgrepo, 'msgId'>) {
+    const alreadyExistsOne = await this.findMsgrepoByDeDuplicateString(messageOmitMsgId);
+    if (alreadyExistsOne) return alreadyExistsOne;
+    const message: Msgrepo = {
+      ...messageOmitMsgId,
+      msgId: await this.getNextMsgId(messageOmitMsgId.chatId),
+    };
+    await this.ctx.model.Msgrepo.create(message);
+    return message;
   }
 }
