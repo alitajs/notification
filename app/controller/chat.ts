@@ -46,9 +46,16 @@ export default class ChatController extends Controller {
     this.ctx.body = await this.service.chat.getUnreadCount(chatId, accountId!);
   }
 
+  public async insertChatMember() {
+    // TODO: is chat admin
+    const { accountId, chatId } = this.ctx.params;
+    const member = await this.service.chat.insertChatMember(chatId, accountId);
+    this.ctx.body = member.get();
+  }
+
   public async listAccountChats() {
     const { accountId } = this.ctx.request;
-    const { limit = 10, offset } = validatePagination(this.ctx, this.ctx.query);
+    const { limit, offset } = validatePagination(this.ctx, this.ctx.query);
     const lists = await this.service.chat.listAccountChats(accountId!, limit, offset);
     this.ctx.body = {
       count: lists.count,
@@ -59,7 +66,7 @@ export default class ChatController extends Controller {
   public async listChatMembers() {
     const { accountId } = this.ctx.request;
     const { chatId } = this.ctx.params;
-    const { limit = 10, offset } = validatePagination(this.ctx, this.ctx.query);
+    const { limit, offset } = validatePagination(this.ctx, this.ctx.query);
     const [lists] = await Promise.all([
       this.service.chat.listChatMembers(chatId, limit, offset),
       this.checkIsChatMember(accountId, chatId),
@@ -68,6 +75,12 @@ export default class ChatController extends Controller {
       count: lists.count,
       rows: lists.rows.map(chat => this.app.lodash.omit(chat.get(), 'chatId')),
     };
+  }
+
+  public async listUnreadCounts() {
+    const { accountId } = this.ctx.request;
+    const { limit, offset } = validatePagination(this.ctx, this.ctx.query);
+    this.ctx.body = await this.service.chat.listUnreadCounts(accountId!, limit, offset);
   }
 
   public async markAllAsRead() {
@@ -109,7 +122,9 @@ export default class ChatController extends Controller {
   }
 
   public async removeChatMember() {
-    // TODO: chat admin
+    // TODO: is chat admin
+    const { accountId, chatId } = this.ctx.params;
+    this.ctx.body = await this.service.chat.removeChatMember(chatId, accountId);
   }
 
   private async checkIsChatMember(

@@ -59,7 +59,7 @@ export default class ChatService extends Service {
     return Math.max(maxMsgId - readMsgId, 0);
   }
 
-  public async insertMember(chatId: string, accountId: string) {
+  public async insertChatMember(chatId: string, accountId: string) {
     const where = validateAttr(DefineChat, { accountId, chatId });
     // use `findOrCreate` to ensure `Union(chatId, accountId)` is unique.
     const [instance] = await this.ctx.model.Chat.findOrCreate({ where });
@@ -75,17 +75,17 @@ export default class ChatService extends Service {
     return !!instance;
   }
 
-  public listAccountChats(accountId: string, limit: number, offset?: number) {
+  public listAccountChats(accountId: string, limit?: number, offset?: number) {
     const where = validateAttr(DefineChat, { accountId });
     return this.ctx.model.Chat.findAndCountAll({ limit, offset, where });
   }
 
-  public listChatMembers(chatId: string, limit: number, offset?: number) {
+  public listChatMembers(chatId: string, limit?: number, offset?: number) {
     const where = validateAttr(DefineChat, { chatId });
     return this.ctx.model.Chat.findAndCountAll({ limit, offset, where });
   }
 
-  public async listUnreadCounts(accountId: string, limit: number, offset?: number) {
+  public async listUnreadCounts(accountId: string, limit?: number, offset?: number) {
     const calculateResultKey = 'unread';
     const where = validateAttr(DefineChat, { accountId });
     const findResult = await this.ctx.model.Chat.findAndCountAll({

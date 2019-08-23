@@ -115,6 +115,18 @@ export default class MsgService extends Service {
   }
 
   /**
+   * Only for scenes such as deleting sensitive content. However, in non-special cases,
+   * it is suggested to implement it in a way similar to recall message.
+   */
+  public removeMsg(chatId: string, msgId: number) {
+    const where = validateAttr(DefineMsgrepo, { chatId, msgId });
+    return Promise.all([
+      this.ctx.model.Msgrepo.destroy({ where }),
+      this.ctx.model.Msgsync.destroy({ where }),
+    ]);
+  }
+
+  /**
    * Resend one message.
    * @description
    * Check whether the message has been successfully written to the message persistent repository
