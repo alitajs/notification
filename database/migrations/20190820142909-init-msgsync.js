@@ -17,7 +17,7 @@ module.exports = {
         allowNull: false,
       },
       deDuplicate: {
-        type: STRING(6),
+        type: STRING(12),
         allowNull: false,
       },
       msgId: {

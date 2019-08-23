@@ -121,8 +121,13 @@ export default class ChatService extends Service {
   public updateChatMsgId(chatId: string, maxMsgId: number) {
     const attrs = validateAttr(DefineChat, { chatId, maxMsgId });
     return this.ctx.model.Chat.update(
-      { readMsgId: attrs.maxMsgId },
-      { where: { chatId: attrs.chatId } },
+      { maxMsgId: attrs.maxMsgId },
+      {
+        where: {
+          chatId: attrs.chatId,
+          maxMsgId: { [sequelize.Op.lt]: attrs.maxMsgId },
+        },
+      },
     );
   }
 

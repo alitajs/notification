@@ -1,3 +1,4 @@
+import { MsgType } from '@/service/msg';
 import { validatePagination } from '@/utils';
 import { AccessDeny, NotFound } from '@/utils/errorcode';
 import { Controller } from 'egg';
@@ -40,6 +41,19 @@ export default class MsgController extends Controller {
     this.ctx.body = lists.map(msgsync => this.app.lodash.omit(msgsync.get(), 'recipientId'));
   }
 
+  public async recallMsg() {
+    const { chatId, creationTime, msgId: recallMsgId } = this.ctx.params;
+    const msgrepo = await this.service.msg.sendMsg(
+      chatId,
+      recallMsgId,
+      recallMsgId,
+      creationTime,
+      MsgType.recall,
+    );
+    // await this.service.msg.updateMsgrepoType(msgrepo.chatId, msgrepo.msgId, MsgType.recalled);
+    this.ctx.body = msgrepo;
+  }
+
   public async resendMsg() {
     const { chatId, creationTime, deDuplicate, type } = this.ctx.params;
     this.ctx.body = await this.service.msg.resendMsg(
@@ -51,6 +65,30 @@ export default class MsgController extends Controller {
     );
   }
 
+  public async resendText() {
+    const { chatId, creationTime, deDuplicate } = this.ctx.params;
+    this.ctx.body = await this.service.msg.resendMsg(
+      chatId,
+      this.ctx.request.body,
+      deDuplicate,
+      creationTime,
+      null,
+    );
+  }
+
+  public async retryRecallMsg() {
+    const { chatId, creationTime, msgId: recallMsgId } = this.ctx.params;
+    const msgrepo = await this.service.msg.resendMsg(
+      chatId,
+      recallMsgId,
+      recallMsgId,
+      creationTime,
+      MsgType.recall,
+    );
+    // await this.service.msg.updateMsgrepoType(msgrepo.chatId, msgrepo.msgId, MsgType.recalled);
+    this.ctx.body = msgrepo;
+  }
+
   public async sendMsg() {
     const { chatId, creationTime, deDuplicate, type } = this.ctx.params;
     this.ctx.body = await this.service.msg.sendMsg(
@@ -59,6 +97,17 @@ export default class MsgController extends Controller {
       deDuplicate,
       creationTime,
       type,
+    );
+  }
+
+  public async sendText() {
+    const { chatId, creationTime, deDuplicate } = this.ctx.params;
+    this.ctx.body = await this.service.msg.sendMsg(
+      chatId,
+      this.ctx.request.body,
+      deDuplicate,
+      creationTime,
+      null,
     );
   }
 

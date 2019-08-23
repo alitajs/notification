@@ -6,6 +6,7 @@ import { Service } from 'egg';
 import { Op } from 'sequelize';
 
 export const enum MsgType {
+  PLACE_HOLDER,
   recall,
   recalled,
 }
@@ -158,6 +159,7 @@ export default class MsgService extends Service {
     msgrepo.msgId = await this.getNextMsgId(chatId);
     await this.insertMsgrepo(msgrepo);
     this.protectedInsertMsgsync(msgrepo);
+    this.protectedUpdateChatAndReadMsgId(msgrepo);
     return msgrepo;
   }
 
@@ -187,7 +189,13 @@ export default class MsgService extends Service {
     msgrepo.msgId = await this.getNextMsgId(chatId);
     await this.insertMsgrepo(msgrepo);
     this.protectedInsertMsgsync(msgrepo);
+    this.protectedUpdateChatAndReadMsgId(msgrepo);
     return msgrepo;
+  }
+
+  public updateMsgrepoType(chatId: string, msgId: number, type: number | null) {
+    const where = validateAttr(DefineMsgrepo, { chatId, msgId });
+    return this.ctx.model.Msgrepo.update(validateAttr(DefineMsgrepo, { type }), { where });
   }
 
   /** private methods */
@@ -268,6 +276,15 @@ export default class MsgService extends Service {
       this.ctx.logger.error(error);
     }
     return false;
+  }
+
+  private protectedUpdateChatAndReadMsgId(msgrepo: Msgrepo) {
+    try {
+      this.service.chat.updateChatMsgId(msgrepo.chatId, msgrepo.msgId);
+      this.service.chat.updateReadMsg(msgrepo.chatId, msgrepo.senderId, msgrepo.msgId);
+    } catch (error) {
+      this.ctx.logger.error(error);
+    }
   }
 
   private async retryInsertMsgrepo(messageOmitMsgId: Omit<Msgrepo, 'msgId'>) {

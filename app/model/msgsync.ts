@@ -47,7 +47,7 @@ export const DefineMsgsync: DefineModel<Msgsync> = {
             type: string
             isSchema: true
             limitation:
-              - max: 6
+              - max: 12
               - token: []
               - allow: ""
           msgId:

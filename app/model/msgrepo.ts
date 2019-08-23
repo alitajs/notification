@@ -29,7 +29,7 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
       allowNull: false,
     },
     deDuplicate: {
-      type: STRING(6),
+      type: STRING(12),
       allowNull: false,
     },
     msgId: {
@@ -80,7 +80,7 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
             type: string
             isSchema: true
             limitation:
-              - max: 6
+              - max: 12
               - token: []
               - allow: ""
           msgId:
