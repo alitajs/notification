@@ -5,8 +5,8 @@ node_js:
   - '10'
 install:
   - npm install
-  - sh scripts\install\mariadb.sh
-  - sh scripts\install\redis.sh
+  - sh ./scripts/install/mariadb.sh
+  - sh ./scripts/install/redis.sh
 before_script:
   - npm run start:mysql
   - npm run start:redis
