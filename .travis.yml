@@ -3,9 +3,7 @@ language: node_js
 services:
   - mysql
   - redis-server
-node_js:
-  - '8'
-  - '10'
+node_js: '10'
 before_install:
   - echo "CREATE DATABASE IF NOT EXISTS notification_test;\nUSE mysql;\nUPDATE user SET user='port', authentication_string=PASSWORD('port') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
 install:
