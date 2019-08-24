@@ -4,6 +4,12 @@ import { validateAttr } from '@/utils';
 import { Service } from 'egg';
 import sequelize from 'sequelize';
 
+export const enum AccountType {
+  PLACE_HOLDER,
+  chatAdmin = 1 << 0,
+  chatManager = 1 << 1,
+}
+
 /**
  * Manage meta informations of chats:
  * - members of specific chat
@@ -12,6 +18,11 @@ import sequelize from 'sequelize';
  * - mark read progress
  */
 export default class ChatService extends Service {
+  public async chatMemberHasType(chatId: string, accountId: string, type: AccountType) {
+    const accountType = await this.getChatMemberType(chatId, accountId);
+    return !!accountType && !!(accountType & type);
+  }
+
   public getAllAccountChats(accountId: string) {
     const where = validateAttr(DefineChat, { accountId });
     return this.ctx.model.Chat.findAll({ where });
@@ -33,6 +44,12 @@ export default class ChatService extends Service {
       chatId: instance.get('chatId') as string,
       unread: (instance.get(calculateResultKey as keyof Chat) as number) || 0,
     }));
+  }
+
+  public async getChatMemberType(chatId: string, accountId: string) {
+    const where = validateAttr(DefineChat, { accountId, chatId });
+    const instance = await this.ctx.model.Chat.findOne({ attributes: ['type'], where });
+    if (instance) return instance.get('type') as Chat['type'];
   }
 
   /**
@@ -116,6 +133,14 @@ export default class ChatService extends Service {
   public removeChatMember(chatId: string, accountId: string) {
     const where = validateAttr(DefineChat, { accountId, chatId });
     return this.ctx.model.Chat.destroy({ where });
+  }
+
+  public updateChatMemberType(chatId: string, accountId: string, type: number | null) {
+    const attrs = validateAttr(DefineChat, { accountId, chatId, type });
+    return this.ctx.model.Chat.update(
+      { type: attrs.type },
+      { where: { chatId: attrs.chatId, accountId: attrs.accountId } },
+    );
   }
 
   public updateChatMsgId(chatId: string, maxMsgId: number) {

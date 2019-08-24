@@ -6,6 +6,7 @@ export default async (app: Application) => {
   router.del('/admin/chat/:chatId', controller.admin.removeChat);
   router.del('/admin/chat/:chatId/account/:accountId', controller.admin.removeChatMember);
   router.post('/admin/chat/:chatId/account/:accountId', controller.admin.insertChatMember);
+  router.post('/admin/chat/:chatId/account/:accountId/type', controller.admin.updateChatMemberType);
   router.get('/admin/chat/:chatId/all-accounts', controller.admin.getAllChatMembers);
   router.get('/admin/chat/:chatId/has-account/:accountId', controller.admin.isChatMember);
   router.get('/admin/chat/:chatId/list-accounts', controller.admin.listChatMembers);
@@ -51,4 +52,5 @@ export default async (app: Application) => {
   /** chat - chat admin */
   router.del('/chat/:chatId/account/:accountId', controller.chat.removeChatMember);
   router.post('/chat/:chatId/account/:accountId', controller.chat.insertChatMember);
+  router.post('/chat/:chatId/account/:accountId/type', controller.chat.updateChatMemberType);
 };

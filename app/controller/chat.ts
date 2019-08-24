@@ -1,6 +1,7 @@
 import { Chat, DefineChat } from '@/model/chat';
+import { AccountType } from '@/service/chat';
 import { validateAttr, validatePagination } from '@/utils';
-import { AccessDeny, NotFound } from '@/utils/errorcode';
+import { AccessDeny, ErrCode, NotFound } from '@/utils/errorcode';
 import { Controller } from 'egg';
 import sequelize from 'sequelize';
 
@@ -47,9 +48,16 @@ export default class ChatController extends Controller {
   }
 
   public async insertChatMember() {
-    // TODO: is chat admin
+    const { accountId: currentAccountId } = this.ctx.request;
     const { accountId, chatId } = this.ctx.params;
-    const member = await this.service.chat.insertChatMember(chatId, accountId);
+    const [member] = await Promise.all([
+      this.service.chat.insertChatMember(chatId, accountId),
+      this.checkChatMemberType(
+        currentAccountId,
+        chatId,
+        AccountType.chatAdmin | AccountType.chatManager,
+      ),
+    ]);
     this.ctx.body = member.get();
   }
 
@@ -90,7 +98,7 @@ export default class ChatController extends Controller {
       { readMsgId: (sequelize.literal('`maxMsgId`') as unknown) as number },
       { where: { accountId: attrs.accountId! } },
     );
-    return 'OK';
+    return ErrCode.Succeed;
   }
 
   public async markAsRead() {
@@ -101,7 +109,7 @@ export default class ChatController extends Controller {
       { readMsgId: (sequelize.literal('`maxMsgId`') as unknown) as number },
       { where: { chatId: attrs.chatId, accountId: attrs.accountId! } },
     );
-    return 'OK';
+    return ErrCode.Succeed;
   }
 
   public async markAsUnread() {
@@ -118,13 +126,31 @@ export default class ChatController extends Controller {
         },
       },
     );
-    return 'OK';
+    return ErrCode.Succeed;
   }
 
   public async removeChatMember() {
-    // TODO: is chat admin
+    const { accountId: currentAccountId } = this.ctx.request;
     const { accountId, chatId } = this.ctx.params;
-    this.ctx.body = await this.service.chat.removeChatMember(chatId, accountId);
+    const [removedCount] = await Promise.all([
+      this.service.chat.removeChatMember(chatId, accountId),
+      this.checkChatMemberType(
+        currentAccountId,
+        chatId,
+        AccountType.chatAdmin | AccountType.chatManager,
+      ),
+    ]);
+    this.ctx.body = removedCount;
+  }
+
+  public async updateChatMemberType() {
+    const { accountId: currentAccountId } = this.ctx.request;
+    const { accountId, chatId } = this.ctx.params;
+    await Promise.all([
+      this.checkChatMemberType(currentAccountId, chatId, AccountType.chatAdmin),
+      this.service.chat.updateChatMemberType(chatId, accountId, this.ctx.request.body),
+    ]);
+    this.ctx.body = ErrCode.Succeed;
   }
 
   private async checkIsChatMember(
@@ -138,5 +164,11 @@ export default class ChatController extends Controller {
       : await this.service.chat.isChatMember(accountId!, chatId);
     if (!isChatMember)
       throw new AccessDeny(`\`${accountId}\` is not a member of chat \`${chatId}\``);
+  }
+
+  private async checkChatMemberType(accountId: string | null, chatId: string, isType: AccountType) {
+    if (!accountId) throw new NotFound('account does not exists');
+    const hasType = await this.service.chat.chatMemberHasType(chatId, accountId, isType);
+    if (!hasType) throw new AccessDeny(`cause of the account type is invalid`);
   }
 }

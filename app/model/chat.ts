@@ -3,12 +3,15 @@ import { Application } from 'egg';
 import { CHAR, INTEGER, Instance } from 'sequelize';
 import yamlJoi from 'yaml-joi';
 
-// TODO: chat admin
 export interface Chat {
   accountId: string;
   chatId: string;
   maxMsgId: number;
   readMsgId: number;
+  /**
+   * account type
+   */
+  type: number | null;
 }
 
 export const DefineChat: DefineModel<Chat> = {
@@ -31,12 +34,17 @@ export const DefineChat: DefineModel<Chat> = {
       allowNull: false,
       defaultValue: 0,
     },
+    type: {
+      type: INTEGER,
+      defaultValue: null,
+    },
   },
   Sample: {
     accountId: 'abcdefghijklmnopqr',
     chatId: 'abcdefghijklmnopqrstuv',
     maxMsgId: 0,
     readMsgId: 0,
+    type: null,
   },
   Validator: yamlJoi(`
     type: object
@@ -64,6 +72,13 @@ export const DefineChat: DefineModel<Chat> = {
           readMsgId:
             type: number
             isSchema: true
+            limitation:
+              - integer: []
+              - min: 0
+          type:
+            type: number
+            isSchema: true
+            allowEmpty: "null"
             limitation:
               - integer: []
               - min: 0

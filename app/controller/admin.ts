@@ -1,4 +1,5 @@
 import { validatePagination } from '@/utils';
+import { ErrCode } from '@/utils/errorcode';
 import { Controller } from 'egg';
 
 export default class AdminController extends Controller {
@@ -63,5 +64,11 @@ export default class AdminController extends Controller {
   public async removeMsg() {
     const { chatId, msgId } = this.ctx.params;
     this.ctx.body = await this.service.msg.removeMsg(chatId, msgId);
+  }
+
+  public async updateChatMemberType() {
+    const { accountId, chatId } = this.ctx.params;
+    await this.service.chat.updateChatMemberType(chatId, accountId, this.ctx.request.body);
+    this.ctx.body = ErrCode.Succeed;
   }
 }
