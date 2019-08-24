@@ -1,15 +1,18 @@
-sudo: true
+sudo: false
 language: node_js
+services:
+  - redis-server
+addons:
+  mariadb: '10.1'
 node_js:
   - '8'
   - '10'
+before_install:
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS notification_test;'
+  - echo "USE mysql;\nUPDATE user SET user='port', password=PASSWORD('port') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
 install:
   - npm install
-  - sh ./scripts/install/mariadb.sh
-  - sh ./scripts/install/redis.sh
 before_script:
-  - npm run start:mysql
-  - npm run start:redis
   - npm run test:migrate
 script: npm run test
 after_script:
