@@ -8,7 +8,7 @@ node_js:
   - '8'
   - '10'
 before_install:
-  - echo "CREATE DATABASE IF NOT EXISTS notification_test;\nUSE mysql;\nUPDATE user SET user='port', password=PASSWORD('port') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -h localhost -u root
+  - echo "CREATE DATABASE IF NOT EXISTS notification_test;\nUSE mysql;\nUPDATE user SET user='port', password=PASSWORD('port') WHERE user='root';\nFLUSH PRIVILEGES;\n" | sudo mysql -u root
 install:
   - npm install
 before_script:
