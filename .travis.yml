@@ -1,14 +1,13 @@
 sudo: false
 language: node_js
 services:
+  - mysql
   - redis-server
-addons:
-  mariadb: '10.1'
 node_js:
   - '8'
   - '10'
 before_install:
-  - echo "CREATE DATABASE IF NOT EXISTS notification_test;\nUSE mysql;\nUPDATE user SET user='port', password=PASSWORD('port') WHERE user='root';\nFLUSH PRIVILEGES;\n" | sudo mysql -u root
+  - echo "CREATE DATABASE IF NOT EXISTS notification_test;\nUSE mysql;\nUPDATE user SET user='port', password=PASSWORD('port') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
 install:
   - npm install
 before_script:
