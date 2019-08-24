@@ -3,9 +3,7 @@ import { MD5, SHA1, SHA256, SHA512, HmacMD5, HmacSHA1, HmacSHA256, HmacSHA512 } 
 import { Context } from 'egg';
 import { Schema } from 'joi';
 import { pick, Dictionary } from 'lodash';
-import { getObjectSearchKeys } from 'object-search-key';
-import { WhereOptions } from 'sequelize';
-import yamlJoi, { JoiSchema } from 'yaml-joi';
+import yamlJoi from 'yaml-joi';
 import { ArgsType, DefineModel, DefineModelAttr } from './types';
 
 export { changeRadix };
@@ -111,18 +109,6 @@ export function delVoid<T>(obj: T): T {
   return obj;
 }
 
-const integerValidator = yamlJoi(`
-type: number
-limitation:
-  - integer: []
-`);
-
-export const validateInt = (...args: any[]): (number | undefined)[] =>
-  args.map(input => {
-    if (!input && typeof input !== 'number') return undefined;
-    return validate(input, integerValidator);
-  });
-
 const paginationValidator = yamlJoi(`
 type: object
 limitation:
@@ -148,31 +134,6 @@ export function validatePagination(
   obj: Dictionary<any>,
 ): { limit?: number; offset?: number } {
   return validate(ctx.app.lodash.pick(obj, 'limit', 'offset'), paginationValidator);
-}
-
-export function generateSearchOr<T>(
-  schema: string | JoiSchema,
-  searchInput: string,
-  includeKeys?: (keyof T)[],
-  excludeKeys?: (keyof T)[],
-) {
-  let search = getObjectSearchKeys(schema, searchInput.split(/(?:\s*)/));
-  if (includeKeys) {
-    const includeSearch = {} as typeof search;
-    (includeKeys as string[]).forEach(key => (includeSearch[key] = search[key]));
-    search = includeSearch;
-  }
-  if (excludeKeys) {
-    (excludeKeys as string[]).forEach(key => delete search[key]);
-  }
-  const or = Object.entries(search).reduce(
-    (prev, curr) => {
-      const [key, value] = curr as [keyof T, (string | number)[]];
-      return prev.concat(value.map(searchKey => ({ [key]: `%${searchKey}%` })));
-    },
-    [] as Dictionary<string | number>[],
-  );
-  return or as WhereOptions<T>[];
 }
 
 export async function retryAsync<

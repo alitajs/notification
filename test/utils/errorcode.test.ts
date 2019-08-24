@@ -8,7 +8,13 @@ describe('test erroce', () => {
   });
 
   it('error class extends', () => {
-    const unknownError = new Errcode.UnknownError();
+    const unknownError = new Errcode.UnknownError('unknown');
+    const serverError = new Errcode.ServerError('server');
+    assert(unknownError.errcode === Errcode.ErrCode.Unknown);
+    assert(unknownError.message === 'unknown');
     assert(unknownError instanceof Error);
+    assert(serverError.errcode === Errcode.ErrCode.ServerError);
+    assert(serverError.message === 'server');
+    assert(serverError instanceof Errcode.UnknownError);
   });
 });
