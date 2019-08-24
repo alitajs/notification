@@ -11,7 +11,7 @@
     "restart:tsc": "npm run stop && npm run tsc && npm run start",
     "dev": "egg-bin dev",
     "debug": "egg-bin debug",
-    "test-local": "egg-bin test",
+    "test-local": "cross-env NODE_ENV=unittest egg-bin test",
     "test": "npm run lint -- --fix && npm run test-local",
     "cov": "egg-bin cov",
     "tsc": "ets && tsc -p tsconfig.json",

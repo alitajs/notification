@@ -34,7 +34,6 @@ export default (appInfo: EggAppInfo): PowerPartial<EggAppConfig> & typeof bizCon
   // Security
   config.security = {
     csrf: { enable: false },
-    domainWhiteList: ['.mofoncloud.com', '.mofon.cloud', 'imhele.com'],
   };
 
   // Redis
