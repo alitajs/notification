@@ -1,5 +1,8 @@
 # notification
 
+[![Alita](https://img.shields.io/badge/alitajs-notification-blue.svg)](https://github.com/alitajs/notification)
+[![Build Status](https://travis-ci.com/alitajs/notification.svg?branch=master)](https://travis-ci.com/alitajs/notification)
+
 小而美的通知中心，适用于站内信、评论区等场景。
 
 ## Feature
