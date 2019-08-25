@@ -195,7 +195,9 @@ export default class MsgService extends Service {
 
   public updateMsgrepoType(chatId: string, msgId: number, type: number | null) {
     const where = validateAttr(DefineMsgrepo, { chatId, msgId });
-    return this.ctx.model.Msgrepo.update(validateAttr(DefineMsgrepo, { type }), { where });
+    return this.ctx.model.Msgrepo.updateEvenIfEmpty(validateAttr(DefineMsgrepo, { type }), {
+      where,
+    });
   }
 
   /** private methods */

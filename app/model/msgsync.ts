@@ -1,3 +1,4 @@
+import { extendsModel } from '@/utils';
 import { DefineModel } from '@/utils/types';
 import { Application } from 'egg';
 import { CHAR, Instance } from 'sequelize';
@@ -79,11 +80,13 @@ export const DefineMsgsync: DefineModel<Msgsync> = {
 };
 
 export default (app: Application) =>
-  app.model.define<Instance<Msgsync>, Msgsync>('Msgsync', DefineMsgsync.Attr, {
-    // use index `receivedMsg` in mysql event:
-    // DELETE FROM `Msgsync` WHERE `recipientId` > '' AND `creationTime` < 1234567890000;
-    indexes: [
-      { name: 'receivedMsg', fields: ['recipientId', 'creationTime'] },
-      { name: 'PrimaryKey', unique: true, fields: ['recipientId', 'chatId', 'msgId'] },
-    ],
-  });
+  extendsModel(
+    app.model.define<Instance<Msgsync>, Msgsync>('Msgsync', DefineMsgsync.Attr, {
+      // use index `receivedMsg` in mysql event:
+      // DELETE FROM `Msgsync` WHERE `recipientId` > '' AND `creationTime` < 1234567890000;
+      indexes: [
+        { name: 'receivedMsg', fields: ['recipientId', 'creationTime'] },
+        { name: 'PrimaryKey', unique: true, fields: ['recipientId', 'chatId', 'msgId'] },
+      ],
+    }),
+  );

@@ -1,9 +1,9 @@
+import { DefineChat } from '@/model/chat';
+import * as utils from '@/utils';
 import assert from 'assert';
 import { app } from 'egg-mock/bootstrap';
 import 'mocha';
 import yamlJoi from 'yaml-joi';
-import { DefineChat } from '../../app/model/chat';
-import * as utils from '../../app/utils';
 
 describe('test utils', () => {
   it('exports', () => {

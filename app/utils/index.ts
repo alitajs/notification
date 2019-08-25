@@ -3,6 +3,7 @@ import { MD5, SHA1, SHA256, SHA512, HmacMD5, HmacSHA1, HmacSHA256, HmacSHA512 } 
 import { Context } from 'egg';
 import { Schema } from 'joi';
 import { pick, Dictionary } from 'lodash';
+import { DatabaseError, Model } from 'sequelize';
 import yamlJoi from 'yaml-joi';
 import { ArgsType, DefineModel, DefineModelAttr } from './types';
 
@@ -157,4 +158,23 @@ export async function retryAsync<
   }
   if (options.throwOnAllFailed) throw options.throwOnAllFailed;
   return options.fallback!;
+}
+
+export function updateEvenIfEmpty(
+  this: Model<any, any>,
+  ...args: ArgsType<(typeof this)['update']>
+): ReturnType<(typeof this)['update']> {
+  return this.update(...args).catch(error => {
+    if (error instanceof DatabaseError) {
+      if (error.message.toLowerCase().includes('query was empty')) {
+        return [0, []];
+      }
+    }
+    throw error;
+  }) as any;
+}
+
+export function extendsModel<T>(model: T): T {
+  (model as any).updateEvenIfEmpty = updateEvenIfEmpty;
+  return model;
 }

@@ -94,7 +94,7 @@ export default class ChatController extends Controller {
   public async markAllAsRead() {
     const { accountId } = this.ctx.request;
     const attrs = validateAttr(DefineChat, { accountId });
-    await this.ctx.model.Chat.update(
+    await this.ctx.model.Chat.updateEvenIfEmpty(
       { readMsgId: (sequelize.literal('`maxMsgId`') as unknown) as number },
       { where: { accountId: attrs.accountId! } },
     );
@@ -105,7 +105,7 @@ export default class ChatController extends Controller {
     const { accountId } = this.ctx.request;
     const { chatId } = this.ctx.params;
     const attrs = validateAttr(DefineChat, { accountId, chatId });
-    await this.ctx.model.Chat.update(
+    await this.ctx.model.Chat.updateEvenIfEmpty(
       { readMsgId: (sequelize.literal('`maxMsgId`') as unknown) as number },
       { where: { chatId: attrs.chatId, accountId: attrs.accountId! } },
     );
@@ -116,7 +116,7 @@ export default class ChatController extends Controller {
     const { accountId } = this.ctx.request;
     const { chatId } = this.ctx.params;
     const attrs = validateAttr(DefineChat, { accountId, chatId });
-    await this.ctx.model.Chat.update(
+    await this.ctx.model.Chat.updateEvenIfEmpty(
       { readMsgId: (sequelize.literal('(`maxMsgId` - 1)') as unknown) as number },
       {
         where: {

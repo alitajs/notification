@@ -1,3 +1,4 @@
+import { extendsModel } from '@/utils';
 import { DefineModel } from '@/utils/types';
 import { Application } from 'egg';
 import { CHAR, INTEGER, Instance, STRING, TEXT } from 'sequelize';
@@ -106,10 +107,12 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
 };
 
 export default (app: Application) =>
-  app.model.define<Instance<Msgrepo>, Msgrepo>('Msgrepo', DefineMsgrepo.Attr, {
-    indexes: [
-      { name: 'PrimaryKey', unique: true, fields: ['chatId', 'msgId'] },
-      { name: 'msgCreationTime', fields: ['chatId', 'creationTime'] },
-      // { name: 'msgCreationTime', fields: ['chatId', 'creationTime', 'deDuplicate'], unique: true },
-    ],
-  });
+  extendsModel(
+    app.model.define<Instance<Msgrepo>, Msgrepo>('Msgrepo', DefineMsgrepo.Attr, {
+      indexes: [
+        { name: 'PrimaryKey', unique: true, fields: ['chatId', 'msgId'] },
+        { name: 'msgCreationTime', fields: ['chatId', 'creationTime'] },
+        // { name: 'msgCreationTime', fields: ['chatId', 'creationTime', 'deDuplicate'], unique: true },
+      ],
+    }),
+  );

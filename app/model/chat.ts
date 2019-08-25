@@ -1,3 +1,4 @@
+import { extendsModel } from '@/utils';
 import { DefineModel } from '@/utils/types';
 import { Application } from 'egg';
 import { CHAR, INTEGER, Instance } from 'sequelize';
@@ -85,10 +86,13 @@ export const DefineChat: DefineModel<Chat> = {
     `),
 };
 
-export default (app: Application) =>
-  app.model.define<Instance<Chat>, Chat>('Chat', DefineChat.Attr, {
+export default (app: Application) => {
+  const ChatModel = app.model.define<Instance<Chat>, Chat>('Chat', DefineChat.Attr, {
     indexes: [
       { name: 'accountIdIndex', fields: ['accountId'] },
       { name: 'chatIdIndex', fields: ['chatId'] },
     ],
   });
+  ChatModel.removeAttribute('id');
+  return extendsModel(ChatModel);
+};

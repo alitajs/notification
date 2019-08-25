@@ -137,7 +137,7 @@ export default class ChatService extends Service {
 
   public updateChatMemberType(chatId: string, accountId: string, type: number | null) {
     const attrs = validateAttr(DefineChat, { accountId, chatId, type });
-    return this.ctx.model.Chat.update(
+    return this.ctx.model.Chat.updateEvenIfEmpty(
       { type: attrs.type },
       { where: { chatId: attrs.chatId, accountId: attrs.accountId } },
     );
@@ -145,7 +145,7 @@ export default class ChatService extends Service {
 
   public updateChatMsgId(chatId: string, maxMsgId: number) {
     const attrs = validateAttr(DefineChat, { chatId, maxMsgId });
-    return this.ctx.model.Chat.update(
+    return this.ctx.model.Chat.updateEvenIfEmpty(
       { maxMsgId: attrs.maxMsgId },
       {
         where: {
@@ -158,7 +158,7 @@ export default class ChatService extends Service {
 
   public updateReadMsg(chatId: string, accountId: string, readMsgId: number) {
     const attrs = validateAttr(DefineChat, { accountId, chatId, readMsgId });
-    return this.ctx.model.Chat.update(
+    return this.ctx.model.Chat.updateEvenIfEmpty(
       { readMsgId: attrs.readMsgId },
       { where: { chatId: attrs.chatId, accountId: attrs.accountId } },
     );
