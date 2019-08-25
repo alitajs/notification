@@ -22,6 +22,10 @@ module.exports = {
         allowNull: false,
         defaultValue: 0,
       },
+      type: {
+        type: INTEGER,
+        defaultValue: null,
+      },
     });
     // await queryInterface.addConstraint('Chat', ['chatId', 'accountId'], {
     //   type: 'primary key',
