@@ -1,6 +1,6 @@
-import * as Errcode from '../../app/utils/errorcode';
 import assert from 'assert';
 import 'mocha';
+import * as Errcode from '../../app/utils/errorcode';
 
 describe('test erroce', () => {
   it('error code', () => {
