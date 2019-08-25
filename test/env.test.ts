@@ -1,7 +1,8 @@
-import assert from 'assert';
-import { app } from 'egg-mock/bootstrap';
 import 'mocha';
 import 'tsconfig-paths/register';
+
+import assert from 'assert';
+import { app } from 'egg-mock/bootstrap';
 
 describe('test env', () => {
   it('is unit test', () => {

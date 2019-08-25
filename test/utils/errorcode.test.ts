@@ -1,6 +1,8 @@
+import 'mocha';
+import 'tsconfig-paths/register';
+
 import * as Errcode from '@/utils/errorcode';
 import assert from 'assert';
-import 'mocha';
 
 describe('test erroce', () => {
   it('error code', () => {

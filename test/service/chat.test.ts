@@ -1,8 +1,10 @@
+import 'mocha';
+import 'tsconfig-paths/register';
+
 import { Chat } from '@/model/chat';
 import { SUUID } from '@/utils';
 import assert from 'assert';
 import { app } from 'egg-mock/bootstrap';
-import 'mocha';
 
 const mockChatId = {
   A: SUUID(22),
@@ -50,6 +52,11 @@ const mockChatInstances: Chat[] = [
 ];
 
 describe('test service.chat', () => {
+  beforeEach(async () => {
+    /** ensure extend.application works */
+    await app.hook.onAppReady.wait(app);
+  });
+
   it('test service.chat', async () => {
     /** initialize */
     const ctx = app.mockContext();

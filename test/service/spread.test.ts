@@ -1,9 +1,16 @@
+import 'mocha';
+import 'tsconfig-paths/register';
+
 import { SUUID } from '@/utils';
 import assert from 'assert';
 import { app } from 'egg-mock/bootstrap';
-import 'mocha';
 
 describe('test service.spread', () => {
+  beforeEach(async () => {
+    /** ensure extend.application works */
+    await app.hook.onAppReady.wait(app);
+  });
+
   it('message spread mode', async () => {
     /** check the test environment */
     const ctx = app.mockContext();
