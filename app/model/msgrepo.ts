@@ -106,13 +106,14 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
     `),
 };
 
-export default (app: Application) =>
-  extendsModel(
-    app.model.define<Instance<Msgrepo>, Msgrepo>('Msgrepo', DefineMsgrepo.Attr, {
-      indexes: [
-        { name: 'PrimaryKey', unique: true, fields: ['chatId', 'msgId'] },
-        { name: 'msgCreationTime', fields: ['chatId', 'creationTime'] },
-        // { name: 'msgCreationTime', fields: ['chatId', 'creationTime', 'deDuplicate'], unique: true },
-      ],
-    }),
-  );
+export default (app: Application) => {
+  const MsgrepoModel = app.model.define<Instance<Msgrepo>, Msgrepo>('Msgrepo', DefineMsgrepo.Attr, {
+    indexes: [
+      { name: 'PrimaryKey', unique: true, fields: ['chatId', 'msgId'] },
+      { name: 'msgCreationTime', fields: ['chatId', 'creationTime'] },
+      // { name: 'msgCreationTime', fields: ['chatId', 'creationTime', 'deDuplicate'], unique: true },
+    ],
+  });
+  MsgrepoModel.removeAttribute('id');
+  return extendsModel(MsgrepoModel);
+};
