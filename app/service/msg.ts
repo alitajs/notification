@@ -1,6 +1,7 @@
 import { DefineMsgrepo, Msgrepo } from '@/model/msgrepo';
 import { DefineMsgsync, Msgsync } from '@/model/msgsync';
 import { retryAsync, validateAttr, validateModel } from '@/utils';
+import { ArgsType } from '@/utils/types';
 import { Service } from 'egg';
 import { Op, WhereOptions } from 'sequelize';
 
@@ -172,12 +173,24 @@ export default class MsgService extends Service {
     const alreadyExistsOne = await this.findMsgrepoByDeDuplicateString(msgrepo);
     if (alreadyExistsOne) {
       this.protectedInsertMsgsync(alreadyExistsOne);
+
+      /** call hooks */
+      this.app.hook.afterResendMsg.safeExec(this.ctx, alreadyExistsOne);
+      await this.app.hook.afterResendMsgAsync.safeWait(this.ctx, alreadyExistsOne);
+
       return alreadyExistsOne;
     }
+
+    /** try to save message instance again */
     msgrepo.msgId = await this.getNextMsgId(chatId);
     await this.insertMsgrepo(msgrepo);
     this.protectedInsertMsgsync(msgrepo);
     this.protectedUpdateChatAndReadMsgId(msgrepo);
+
+    /** call hooks */
+    this.app.hook.afterResendMsg.safeExec(this.ctx, msgrepo);
+    await this.app.hook.afterResendMsgAsync.safeWait(this.ctx, msgrepo);
+
     return msgrepo;
   }
 
@@ -205,9 +218,16 @@ export default class MsgService extends Service {
       type,
     });
     msgrepo.msgId = await this.getNextMsgId(chatId);
+
+    /** save message instance */
     await this.insertMsgrepo(msgrepo);
     this.protectedInsertMsgsync(msgrepo);
     this.protectedUpdateChatAndReadMsgId(msgrepo);
+
+    /** call hooks */
+    this.app.hook.afterSendMsg.safeExec(this.ctx, msgrepo);
+    await this.app.hook.afterSendMsgAsync.safeWait(this.ctx, msgrepo);
+
     return msgrepo;
   }
 
@@ -245,18 +265,20 @@ export default class MsgService extends Service {
   }
 
   private async insertMsgsync(msgrepo: Msgrepo) {
-    const members = await this.ctx.model.Chat.findAll({
+    const recipientsId: string[] = await this.ctx.model.Chat.findAll({
       attributes: ['accountId'],
       where: { chatId: msgrepo.chatId },
-    });
-    const chunk = this.app.lodash.chunk(members, MsgService.MsgsyncChunk);
+    }).then(instances => instances.map(instance => instance.get('accountId')));
+
+    const chunk = this.app.lodash.chunk(recipientsId, MsgService.MsgsyncChunk);
     for (const part of chunk) {
-      const records: Msgsync[] = part.map(member => ({
-        ...msgrepo,
-        recipientId: member.get('accountId'),
-      }));
+      const records: Msgsync[] = part.map(recipientId => ({ ...msgrepo, recipientId }));
       await this.ctx.model.Msgsync.bulkCreate(records, { ignoreDuplicates: true });
     }
+
+    /** call hooks */
+    this.app.hook.afterInsertMsgsync.safeExec(this.ctx, msgrepo, recipientsId);
+    await this.app.hook.afterInsertMsgsyncAsync.safeWait(this.ctx, msgrepo, recipientsId);
   }
 
   /**
@@ -270,11 +292,17 @@ export default class MsgService extends Service {
     try {
       return await this.ctx.model.Msgrepo.create(msgrepo);
     } catch (error) {
+      const retryOptions: ArgsType<typeof retryAsync>['3'] = {
+        onRetryThrow: retryError => {
+          this.app.hook.onInsertMsgrepoRetryThrow.safeExec(this.ctx, msgrepo, retryError);
+        },
+        throwOnAllFailed: error,
+      };
       return await retryAsync(
         MsgService.RetryTimes.InsertMsgrepo,
         this.retryInsertMsgrepo,
         [msgrepo],
-        { throwOnAllFailed: error },
+        retryOptions,
       );
     }
   }
@@ -293,17 +321,21 @@ export default class MsgService extends Service {
     try {
       await this.insertMsgsync(msgrepo);
     } catch (error) {
-      this.ctx.logger.error(error);
+      this.app.hook.onProtectedInsertMsgsyncFailed.safeExec(this.ctx, msgrepo);
+      await this.app.hook.onProtectedInsertMsgsyncFailedAsync.safeWait(this.ctx, msgrepo);
     }
     return false;
   }
 
-  private protectedUpdateChatAndReadMsgId(msgrepo: Msgrepo) {
+  private async protectedUpdateChatAndReadMsgId(msgrepo: Msgrepo) {
     try {
-      this.service.chat.updateChatMsgId(msgrepo.chatId, msgrepo.msgId);
-      this.service.chat.updateReadMsg(msgrepo.chatId, msgrepo.senderId, msgrepo.msgId);
+      await Promise.all([
+        this.service.chat.updateChatMsgId(msgrepo.chatId, msgrepo.msgId),
+        this.service.chat.updateReadMsg(msgrepo.chatId, msgrepo.senderId, msgrepo.msgId),
+      ]);
     } catch (error) {
-      this.ctx.logger.error(error);
+      this.app.hook.onProtectedUpdateChatAndReadMsgIdFailed.safeExec(this.ctx, msgrepo);
+      await this.app.hook.onProtectedUpdateChatAndReadMsgIdFailedAsync.safeExec(this.ctx, msgrepo);
     }
   }
 
