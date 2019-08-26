@@ -12,7 +12,7 @@ export default class MsgController extends Controller {
       this.service.msg.listChatHistoryMsgs(chatId, afterMsgId, limit),
       this.checkIsChatMember(accountId, chatId),
     ]);
-    this.ctx.body = lists.map(msgrepo => msgrepo.get());
+    this.ctx.body = lists.map(msgrepo => this.app.lodash.omit(msgrepo.get(), 'chatId'));
   }
 
   public async listChatHistoryMsgsByTime() {
@@ -23,7 +23,18 @@ export default class MsgController extends Controller {
       this.service.msg.listChatHistoryMsgsByTime(chatId, afterTime, limit),
       this.checkIsChatMember(accountId, chatId),
     ]);
-    this.ctx.body = lists.map(msgrepo => msgrepo.get());
+    this.ctx.body = lists.map(msgrepo => this.app.lodash.omit(msgrepo.get(), 'chatId'));
+  }
+
+  public async listChatHistoryMsgsQuantitatively() {
+    const { accountId } = this.ctx.request;
+    const { chatId, msgId: beforeMsgId } = this.ctx.params;
+    const { limit } = validatePagination(this.ctx, this.ctx.query);
+    const [lists] = await Promise.all([
+      this.service.msg.listChatHistoryMsgsQuantitatively(chatId, limit, beforeMsgId),
+      this.checkIsChatMember(accountId, chatId),
+    ]);
+    this.ctx.body = lists.map(msgrepo => this.app.lodash.omit(msgrepo.get(), 'chatId'));
   }
 
   public async listRecentMsgs() {

@@ -1,9 +1,8 @@
 import { DefineMsgrepo, Msgrepo } from '@/model/msgrepo';
 import { DefineMsgsync, Msgsync } from '@/model/msgsync';
 import { retryAsync, validateAttr, validateModel } from '@/utils';
-// import { NotFound } from '@/utils/errorcode';
 import { Service } from 'egg';
-import { Op } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
 
 export const enum MsgType {
   PLACE_HOLDER,
@@ -53,6 +52,8 @@ export default class MsgService extends Service {
    * List the history message records of a chat session after **specific message id**.
    * @description
    * Use `afterMsgId` instead of `offset`.
+   * Can be used to get *all messages* of a chat session after a certain
+   * `msgId` in full.
    */
   public listChatHistoryMsgs(chatId: string, afterMsgId: number, limit?: number) {
     const attrs = validateAttr(DefineMsgrepo, { chatId, msgId: afterMsgId });
@@ -70,6 +71,8 @@ export default class MsgService extends Service {
    * List the history message records of a chat session after **specific create time**.
    * @description
    * Use `afterTime` instead of `offset`.
+   * Can be used to get *all messages* of a chat session after a certain
+   * `creationTime` in full.
    */
   public listChatHistoryMsgsByTime(chatId: string, afterTime: number, limit?: number) {
     const attrs = validateAttr(DefineMsgrepo, { chatId, creationTime: afterTime });
@@ -84,10 +87,24 @@ export default class MsgService extends Service {
   }
 
   /**
+   * List the history message records of a chat session after **specific message id** quantitatively.
+   * @description
+   * Use `afterMsgId` instead of `offset`.
+   * Can be used to get *part of messages* of a chat session in order of
+   * `msgId` from large to small.
+   */
+  public listChatHistoryMsgsQuantitatively(chatId: string, limit?: number, beforeMsgId?: number) {
+    const attrs = validateAttr(DefineMsgrepo, { chatId, msgId: beforeMsgId });
+    const where: WhereOptions<Msgrepo> = { chatId: attrs.chatId };
+    if (attrs.msgId) where.msgId = { [Op.lt]: attrs.msgId };
+    return this.ctx.model.Msgrepo.findAll({ limit, order: [['msgId', 'DESC']], where });
+  }
+
+  /**
    * List the recent message records of an account.
    * @description
    * Use `afterTime` instead of `offset`.
-   * Can be used to get all messages after a certain `creationTime` in full.
+   * Can be used to get *all messages* of an account after a certain `creationTime` in full.
    */
   public listRecentMsgs(recipientId: string, afterTime?: number, limit?: number) {
     const attrs = validateAttr(DefineMsgsync, { creationTime: afterTime || 0, recipientId });
@@ -104,7 +121,8 @@ export default class MsgService extends Service {
   /**
    * List the recent message records of an account quantitatively.
    * @description
-   * This function will find messages in order of `creationTime` from large to small.
+   * Can be used to get *part of messages* of an account in order of
+   * `creationTime` from large to small.
    */
   public listRecentMsgsQuantitatively(recipientId: string, limit?: number) {
     recipientId = validateAttr(DefineMsgsync, { recipientId }).recipientId;

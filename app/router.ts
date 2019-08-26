@@ -37,10 +37,15 @@ export default async (app: Application) => {
   router.get('/chat/recent-msgs', controller.msg.listRecentMsgsQuantitatively);
   router.get('/chat/recent-msgs/after-time/:creationTime', controller.msg.listRecentMsgs);
   router.get('/chat/:chatId/msg/:msgId/unread-accounts', controller.chat.getMsgUnreadAccounts);
+  router.get('/chat/:chatId/msgs', controller.msg.listChatHistoryMsgsQuantitatively);
   router.get('/chat/:chatId/msgs/after-id/:msgId', controller.msg.listChatHistoryMsgs);
   router.get(
     '/chat/:chatId/msgs/after-time/:creationTime',
     controller.msg.listChatHistoryMsgsByTime,
+  );
+  router.get(
+    '/chat/:chatId/msgs/before-id/:msgId',
+    controller.msg.listChatHistoryMsgsQuantitatively,
   );
   router.put('/chat/:chatId/recall/:creationTime/:msgId', controller.msg.recallMsg);
   router.put('/chat/:chatId/rerecall/:creationTime/:msgId', controller.msg.retryRecallMsg);

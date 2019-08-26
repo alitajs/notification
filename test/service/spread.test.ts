@@ -1,6 +1,7 @@
 import 'mocha';
 import 'tsconfig-paths/register';
 
+import SpreadService from '@/service/spread';
 import { SUUID } from '@/utils';
 import assert from 'assert';
 import { app } from 'egg-mock/bootstrap';
@@ -15,7 +16,7 @@ describe('test service.spread', () => {
     /** check the test environment */
     const ctx = app.mockContext();
     const service = ctx.service.spread;
-    await app.redis.del('spread:read:chats'); // `SpreadService.RedisKey.ReadSpreadChats`
+    await app.redis.del(SpreadService.RedisKey.ReadSpreadChats);
     const shouldBeEmpty = await service.listReadSpreadChats();
     assert.strictEqual(shouldBeEmpty.nextCursor, null);
     assert.strictEqual(shouldBeEmpty.chats.length, 0);
@@ -42,7 +43,7 @@ describe('test service.spread', () => {
     assert.strictEqual(app.lodash.without(mockChatIdList, ...queryAllChatsFromRedis).length, 0);
     const removedCount = await service.removeReadSpreadChats(...mockChatIdList);
     assert.strictEqual(removedCount, mockChatIdList.length);
-    const resetMembersCount = await app.redis.scard('spread:read:chats');
+    const resetMembersCount = await app.redis.scard(SpreadService.RedisKey.ReadSpreadChats);
     assert.strictEqual(resetMembersCount, 0);
   });
 });
