@@ -2,9 +2,8 @@ import 'mocha';
 import 'tsconfig-paths/register';
 
 import { Chat } from '@/model/chat';
-import { SUUID } from '@/utils';
-// import { AccessDeny } from '@/utils/errorcode';
-// import assert from 'assert';
+import { ErrCode, SUUID, promisifyTestReq } from '@/utils';
+import assert from 'assert';
 import { app } from 'egg-mock/bootstrap';
 
 /**
@@ -30,29 +29,29 @@ const mockChatInstances: Chat[] = [
   {
     accountId: mockAccountId.C,
     chatId: mockChatId.A,
-    maxMsgId: 0,
-    readMsgId: 0,
+    maxMsgId: 4,
+    readMsgId: 4,
     type: 1,
   },
   {
     accountId: mockAccountId.C,
     chatId: mockChatId.B,
-    maxMsgId: 0,
-    readMsgId: 0,
+    maxMsgId: 8,
+    readMsgId: 4,
     type: null,
   },
   {
     accountId: mockAccountId.D,
     chatId: mockChatId.B,
-    maxMsgId: 0,
+    maxMsgId: 8,
     readMsgId: 0,
     type: 1,
   },
   {
     accountId: mockAccountId.E,
     chatId: mockChatId.A,
-    maxMsgId: 0,
-    readMsgId: 0,
+    maxMsgId: 4,
+    readMsgId: 3,
     type: null,
   },
 ];
@@ -72,9 +71,32 @@ describe('test controller.chat', () => {
       ctx.service.chat.insertChatMember(mockChatId.A, mockAccountId.C),
       ctx.service.chat.insertChatMember(mockChatId.B, mockAccountId.D),
     ]);
+
     await Promise.all([
       ctx.service.chat.updateChatMemberType(mockChatId.A, mockAccountId.C, 1),
       ctx.service.chat.updateChatMemberType(mockChatId.B, mockAccountId.D, 1),
+    ]);
+
+    /** start test methods */
+    await Promise.all(
+      [
+        app
+          .httpRequest()
+          .post(`/chat/${mockChatId.A}/account/${mockAccountId.E}`)
+          .set('X-Account-Id', mockAccountId.C)
+          .set('X-Body-Format', 'json')
+          // TODO .set('Content-Type', 'application/json')
+          .expect({ ...mockChatInstances[3], maxMsgId: 0, readMsgId: 0 }),
+        app
+          .httpRequest()
+          .post(`/chat/${mockChatId.B}/account/${mockAccountId.C}`)
+          .set('X-Account-Id', mockAccountId.D)
+          .set('X-Body-Format', 'json')
+          .expect({ ...mockChatInstances[1], maxMsgId: 0, readMsgId: 0 }),
+      ].map(promisifyTestReq),
+    );
+
+    await Promise.all([
       ctx.service.chat.updateChatMsgId(mockChatId.A, 4),
       ctx.service.chat.updateChatMsgId(mockChatId.B, 8),
       ctx.service.chat.updateReadMsg(mockChatId.A, mockAccountId.C, 4),
@@ -82,23 +104,77 @@ describe('test controller.chat', () => {
       ctx.service.chat.updateReadMsg(mockChatId.A, mockAccountId.E, 3),
     ]);
 
-    /** start test methods */
     await Promise.all([
       app
         .httpRequest()
-        .post(`/chat/${mockChatId.A}/account/${mockAccountId.E}`)
+        .get(`/chat/${mockChatId.A}/all-accounts`)
         .set('X-Account-Id', mockAccountId.C)
         .set('X-Body-Format', 'json')
-        // TODO .set('Content-Type', 'application/json')
-        .send({})
-        .expect(mockChatInstances[3]),
+        .then((res: any) => {
+          const accounts = res.body.map((ins: any) => ins.accountId);
+          const shouldBe = [mockAccountId.C, mockAccountId.E];
+          assert.strictEqual(accounts.length, 2);
+          assert.strictEqual(app.lodash.without(accounts, ...shouldBe).length, 0);
+        }),
       app
         .httpRequest()
-        .post(`/chat/${mockChatId.B}/account/${mockAccountId.C}`)
-        .set('X-Account-Id', mockAccountId.D)
+        .get(`/chat/${mockChatId.A}/unread-count`)
+        .set('X-Account-Id', mockAccountId.E)
         .set('X-Body-Format', 'json')
-        .send({})
-        .expect(mockChatInstances[1]),
+        .then((res: any) => assert.strictEqual(res.body, 1)),
     ]);
+
+    await Promise.all(
+      [
+        app
+          .httpRequest()
+          .get(`/chat/all-chats`)
+          .set('X-Account-Id', mockAccountId.D)
+          .set('X-Body-Format', 'json')
+          .expect([app.lodash.omit(mockChatInstances[2], 'accountId')]),
+        app
+          .httpRequest()
+          .get(`/chat/${mockChatId.A}/all-accounts`)
+          .set('X-Account-Id', mockAccountId.D)
+          .set('X-Body-Format', 'json')
+          .expect('X-Error-Code', ErrCode.AccessDeny),
+        app
+          .httpRequest()
+          .get(`/chat/all-unread-counts`)
+          .set('X-Account-Id', mockAccountId.C)
+          .set('X-Body-Format', 'json')
+          .expect([{ chatId: mockChatId.B, unread: 4 }]),
+        app
+          .httpRequest()
+          .get(`/chat/list-unread-counts?limit=1`)
+          .set('X-Account-Id', mockAccountId.D)
+          .set('X-Body-Format', 'json')
+          .expect({ count: 1, rows: [{ chatId: mockChatId.B, unread: 8 }] }),
+        app
+          .httpRequest()
+          .del(`/chat/${mockChatId.A}/account/${mockAccountId.E}`)
+          .set('X-Account-Id', mockAccountId.E)
+          .set('X-Body-Format', 'json')
+          .expect('X-Error-Code', ErrCode.AccessDeny),
+      ].map(promisifyTestReq),
+    );
+
+    await Promise.all([
+      app
+        .httpRequest()
+        .del(`/chat/${mockChatId.A}/account/${mockAccountId.E}`)
+        .set('X-Account-Id', mockAccountId.C)
+        .set('X-Body-Format', 'json')
+        .then((res: any) => assert.strictEqual(res.body, 1)),
+    ]);
+
+    assert.strictEqual(
+      (await Promise.all([
+        ctx.service.chat.isChatMember(mockAccountId.E, mockChatId.A),
+        ctx.service.chat.removeAccount(mockAccountId.C),
+        ctx.service.chat.removeChat(mockChatId.B),
+      ]))[0],
+      false,
+    );
   });
 });

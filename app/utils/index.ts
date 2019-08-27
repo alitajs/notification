@@ -169,3 +169,7 @@ export function extendsModel<T>(model: T): T {
   (model as any).updateEvenIfEmpty = updateEvenIfEmpty;
   return model;
 }
+
+export function promisifyTestReq(req: any) {
+  return new Promise((res, rej) => req.end((err: any, ret: any) => (err ? rej(err) : res(ret))));
+}
