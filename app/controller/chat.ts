@@ -28,11 +28,11 @@ export default class ChatController extends Controller {
 
   public async getMsgUnreadAccounts() {
     const { accountId } = this.ctx.request;
-    const { chatId } = this.ctx.params;
+    const { chatId, msgId } = this.ctx.params;
     // await this.checkIsChatMember(accountId, chatId);
     // this.ctx.body = await this.service.chat.getMsgUnreadAccounts(chatId, msgId);
     const { readMsgId } = validateAttr<Chat, Pick<Chat, 'readMsgId'>>(DefineChat, {
-      readMsgId: this.ctx.params.msgId,
+      readMsgId: msgId,
     });
     const instances = (await this.service.chat.getAllChatMembers(chatId)).map(chat => chat.get());
     await this.checkIsChatMember(accountId, chatId, instances);

@@ -24,3 +24,9 @@ export type DefineModel<T> = {
   Sample: T;
   Validator: YamlJoiSchema;
 };
+
+export const enum Env {
+  Production,
+  Dev,
+  Test,
+}
