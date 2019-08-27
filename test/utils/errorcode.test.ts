@@ -25,6 +25,9 @@ describe('test erroce', () => {
     assert.strictEqual(new Errcode.AuthError('').message, '');
     assert.strictEqual(new Errcode.AccessDeny().message, Errcode.AccessDeny.defaultMsg);
     assert.strictEqual(new Errcode.NotFound().message, Errcode.NotFound.defaultMsg);
+    assert.strictEqual(new Errcode.ValidationError().message, Errcode.ValidationError.defaultMsg);
+    assert.strictEqual(new Errcode.ValidationError('').annotate(), '');
+    assert.strictEqual(new Errcode.ValidationError('').isJoi, true);
     assert.strictEqual(new Errcode.ServerError().message, Errcode.ServerError.defaultMsg);
     assert.strictEqual(new Errcode.DatabaseError().message, Errcode.DatabaseError.defaultMsg);
   });

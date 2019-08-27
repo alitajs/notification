@@ -1,8 +1,20 @@
 import { validatePagination } from '@/utils';
-import { ErrCode } from '@/utils/errorcode';
+import { ErrCode, ValidationError } from '@/utils/errorcode';
 import { Controller } from 'egg';
+import yamlJoi from 'yaml-joi';
 
 export default class AdminController extends Controller {
+  static validator = {
+    StringArray: (value: any): value is string[] =>
+      !yamlJoi(`
+type: array
+limitation:
+  - items:
+      type: string
+      isSchema: true
+`).validate(value).error,
+  };
+
   public async getAllAccountChats() {
     const { accountId } = this.ctx.params;
     const chats = await this.service.chat.getAllAccountChats(accountId);
@@ -19,6 +31,12 @@ export default class AdminController extends Controller {
     const { accountId, chatId } = this.ctx.params;
     const member = await this.service.chat.insertChatMember(chatId, accountId);
     this.ctx.body = member.get();
+  }
+
+  public async insertReadSpreadChats() {
+    if (!AdminController.validator.StringArray(this.ctx.request.body))
+      throw new ValidationError('request body show be an array of string');
+    this.ctx.body = await this.service.spread.insertReadSpreadChats(...this.ctx.request.body);
   }
 
   public async isChatMember() {
@@ -46,6 +64,11 @@ export default class AdminController extends Controller {
     };
   }
 
+  public async listReadSpreadChats() {
+    const { cursor, count } = this.ctx.query;
+    this.ctx.body = await this.service.spread.listReadSpreadChats(cursor, count);
+  }
+
   public async removeAccount() {
     const { accountId } = this.ctx.params;
     this.ctx.body = await this.service.chat.removeAccount(accountId);
@@ -64,6 +87,12 @@ export default class AdminController extends Controller {
   public async removeMsg() {
     const { chatId, msgId } = this.ctx.params;
     this.ctx.body = await this.service.msg.removeMsg(chatId, msgId);
+  }
+
+  public async removeReadSpreadChats() {
+    if (!AdminController.validator.StringArray(this.ctx.request.body))
+      throw new ValidationError('request body show be an array of string');
+    this.ctx.body = await this.service.spread.removeReadSpreadChats(...this.ctx.request.body);
   }
 
   public async updateChatMemberType() {

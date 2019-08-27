@@ -10,6 +10,7 @@ install:
   - npm install
 before_script:
   - npm run test:migrate
-script: npm run ci
+script: npm run cov
 after_script:
+  - npm run coveralls
   - npm run test:unmigrate

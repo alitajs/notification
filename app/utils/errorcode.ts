@@ -1,3 +1,5 @@
+import joi from 'joi';
+
 export class UnknownError extends Error {
   static defaultMsg = 'unknown error';
   public errcode: ErrCode;
@@ -28,6 +30,19 @@ export class NotFound extends UnknownError {
   constructor(message: string = NotFound.defaultMsg) {
     super(message, ErrCode.NotFound);
   }
+}
+
+export class ValidationError extends UnknownError implements joi.ValidationError {
+  static defaultMsg = 'validate failed';
+  isJoi = true;
+  details = [] as joi.ValidationErrorItem[];
+  _object = {};
+
+  constructor(message: string = ValidationError.defaultMsg) {
+    super(message, ErrCode.InvalidParam);
+  }
+
+  annotate = () => this.message;
 }
 
 export class ServerError extends UnknownError {
