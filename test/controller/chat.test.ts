@@ -5,6 +5,7 @@ import { Chat } from '@/model/chat';
 import { ErrCode, SUUID, promisifyTestReq } from '@/utils';
 import assert from 'assert';
 import { app } from 'egg-mock/bootstrap';
+import yaml from 'js-yaml';
 
 /**
  * - Account C is the admin of Chat A and the member of Chat B,
@@ -85,7 +86,6 @@ describe('test controller.chat', () => {
           .post(`/chat/${mockChatId.A}/account/${mockAccountId.E}`)
           .set('X-Account-Id', mockAccountId.C)
           .set('X-Body-Format', 'json')
-          // TODO .set('Content-Type', 'application/json')
           .expect({ ...mockChatInstances[3], maxMsgId: 0, readMsgId: 0 }),
         app
           .httpRequest()
@@ -118,10 +118,22 @@ describe('test controller.chat', () => {
         }),
       app
         .httpRequest()
+        .get(`/chat/${mockChatId.A}/list-accounts`)
+        .set('X-Account-Id', mockAccountId.C)
+        .set('X-Body-Format', 'json')
+        .then((res: any) => {
+          assert.strictEqual(res.body.count, 2);
+          const accounts = res.body.rows.map((ins: any) => ins.accountId);
+          const shouldBe = [mockAccountId.C, mockAccountId.E];
+          assert.strictEqual(accounts.length, 2);
+          assert.strictEqual(app.lodash.without(accounts, ...shouldBe).length, 0);
+        }),
+      app
+        .httpRequest()
         .get(`/chat/${mockChatId.A}/unread-count`)
         .set('X-Account-Id', mockAccountId.E)
         .set('X-Body-Format', 'json')
-        .then((res: any) => assert.strictEqual(res.body, 1)),
+        .then((res: any) => assert.strictEqual(res.text, '1')),
     ]);
 
     await Promise.all(
@@ -132,6 +144,12 @@ describe('test controller.chat', () => {
           .set('X-Account-Id', mockAccountId.D)
           .set('X-Body-Format', 'json')
           .expect([app.lodash.omit(mockChatInstances[2], 'accountId')]),
+        app
+          .httpRequest()
+          .get(`/chat/list-chats`)
+          .set('X-Account-Id', mockAccountId.D)
+          .set('X-Body-Format', 'json')
+          .expect({ count: 1, rows: [app.lodash.omit(mockChatInstances[2], 'accountId')] }),
         app
           .httpRequest()
           .get(`/chat/${mockChatId.A}/all-accounts`)
@@ -162,10 +180,16 @@ describe('test controller.chat', () => {
     await Promise.all([
       app
         .httpRequest()
+        .post(`/chat/${mockChatId.B}/account/${mockAccountId.C}/type`)
+        .set('X-Account-Id', mockAccountId.D)
+        .send('1')
+        .then((res: any) => assert.strictEqual(yaml.safeLoad(res.text), '0')),
+      app
+        .httpRequest()
         .del(`/chat/${mockChatId.A}/account/${mockAccountId.E}`)
         .set('X-Account-Id', mockAccountId.C)
         .set('X-Body-Format', 'json')
-        .then((res: any) => assert.strictEqual(res.body, 1)),
+        .then((res: any) => assert.strictEqual(res.text, '1')),
     ]);
 
     assert.strictEqual(

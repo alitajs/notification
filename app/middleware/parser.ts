@@ -12,6 +12,12 @@ export interface ParserConfig {
 
 function reqBody(ctx: Context, formatType: string) {
   try {
+    if (typeof ctx.request.body !== 'string') {
+      try {
+        const buffer = ctx.req.read();
+        ctx.request.body = buffer && `${buffer}`;
+      } catch {}
+    }
     if (!ctx.request.body) return;
     if (typeof ctx.request.body !== 'string') return;
     switch (formatType) {
