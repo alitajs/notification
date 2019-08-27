@@ -10,6 +10,6 @@ install:
   - npm install
 before_script:
   - npm run test:migrate
-script: npm run test
+script: npm run ci
 after_script:
   - npm run test:unmigrate

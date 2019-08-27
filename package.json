@@ -14,10 +14,10 @@
     "test": "cross-env NODE_ENV=test EGG_SERVER_ENV=unittest egg-bin test",
     "test:migrate": "cross-env NODE_ENV=test sequelize db:migrate",
     "test:unmigrate": "cross-env NODE_ENV=test sequelize db:migrate:undo:all",
-    "cov": "egg-bin cov",
+    "cov": "cross-env NODE_ENV=test EGG_SERVER_ENV=unittest egg-bin cov",
+    "coveralls": "cat ./coverage/lcov.info | coveralls",
+    "ci": "npm run cov && npm run coveralls",
     "tsc": "ets && tsc -p tsconfig.json",
-    "ci": "npm run lint && npm run cov && npm run tsc",
-    "autod": "autod",
     "lint": "tslint --project . -c tslint.yml",
     "lint-staged": "lint-staged",
     "clean": "ets clean"

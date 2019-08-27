@@ -5,7 +5,7 @@ import { Schema } from 'joi';
 import { pick, Dictionary } from 'lodash';
 import { DatabaseError, Model } from 'sequelize';
 import yamlJoi from 'yaml-joi';
-import { ArgsType, DefineModel, DefineModelAttr } from './types';
+import { ArgsType, DefineModel } from './types';
 
 export { changeRadix };
 export { default as ErrCode } from './errorcode';
@@ -89,15 +89,6 @@ export function validateModel<T>(define: DefineModel<T>, attrs: Partial<T>): T {
 
 export function validateAttr<T, U>(define: DefineModel<T>, attrs: U): U {
   return pick(validateModel(define, attrs), ...Object.keys(attrs)) as U;
-}
-
-export function extractDefaultValue<T>(attrDefinition: DefineModelAttr<T>): Partial<T> {
-  const ret: Partial<T> = {};
-  // tslint:disable-next-line: forin
-  for (const key in attrDefinition) {
-    ret[key] = attrDefinition[key].defaultValue;
-  }
-  return ret;
 }
 
 /**

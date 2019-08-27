@@ -12,11 +12,20 @@ describe('test erroce', () => {
   it('error class extends', () => {
     const unknownError = new Errcode.UnknownError('unknown');
     const serverError = new Errcode.ServerError('server');
-    assert(unknownError.errcode === Errcode.ErrCode.Unknown);
-    assert(unknownError.message === 'unknown');
+    assert.strictEqual(unknownError.errcode, Errcode.ErrCode.Unknown);
+    assert.strictEqual(unknownError.message, 'unknown');
     assert(unknownError instanceof Error);
-    assert(serverError.errcode === Errcode.ErrCode.ServerError);
-    assert(serverError.message === 'server');
+    assert.strictEqual(serverError.errcode, Errcode.ErrCode.ServerError);
+    assert.strictEqual(serverError.message, 'server');
     assert(serverError instanceof Errcode.UnknownError);
+  });
+
+  it('error messages', () => {
+    assert.strictEqual(new Errcode.UnknownError().message, Errcode.UnknownError.defaultMsg);
+    assert.strictEqual(new Errcode.AuthError('').message, '');
+    assert.strictEqual(new Errcode.AccessDeny().message, Errcode.AccessDeny.defaultMsg);
+    assert.strictEqual(new Errcode.NotFound().message, Errcode.NotFound.defaultMsg);
+    assert.strictEqual(new Errcode.ServerError().message, Errcode.ServerError.defaultMsg);
+    assert.strictEqual(new Errcode.DatabaseError().message, Errcode.DatabaseError.defaultMsg);
   });
 });

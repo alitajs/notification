@@ -7,11 +7,11 @@ export interface MsgHookExtension {
   /**
    * @callback
    * ```ts
-   * afterInsertMsgsyncCallback(
+   * function afterInsertMsgsyncCallback(
    *   ctx: egg.Context,
    *   msgrepo: model.Msgrepo,
    *   recipientsId: string[],
-   * )
+   * ) {}
    * ```
    * @example
    * // push notification to iOS
@@ -21,11 +21,11 @@ export interface MsgHookExtension {
   /**
    * @callback
    * ```ts
-   * afterInsertMsgsyncAsyncCallback(
+   * function afterInsertMsgsyncAsyncCallback(
    *   ctx: egg.Context,
    *   msgrepo: model.Msgrepo,
    *   recipientsId: string[],
-   * )
+   * ) {}
    * ```
    * @example
    * // push notification to iOS
@@ -39,11 +39,11 @@ export interface MsgHookExtension {
   /**
    * @callback
    * ```ts
-   * onInsertMsgrepoRetryThrowCallback(
+   * function onInsertMsgrepoRetryThrowCallback(
    *   ctx: egg.Context,
    *   msgrepo: model.Msgrepo,
    *   error: any,
-   * )
+   * ) {}
    * ```
    */
   onInsertMsgrepoRetryThrow: Hook<[Context, Msgrepo, any]>;

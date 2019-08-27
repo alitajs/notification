@@ -38,14 +38,6 @@ export class ServerError extends UnknownError {
   }
 }
 
-export class ProxyFailed extends ServerError {
-  static defaultMsg = 'proxy request failed';
-
-  constructor(message: string = ProxyFailed.defaultMsg) {
-    super(message, ErrCode.ProxyFailed);
-  }
-}
-
 export class DatabaseError extends ServerError {
   constructor(message: string = ServerError.defaultMsg) {
     super(message, ErrCode.DatabaseError);
@@ -57,7 +49,6 @@ export const enum ErrCode {
   SystemBusy = '-1',
   Unknown = '-2',
   ServerError = '30000',
-  ProxyFailed = '30001',
   DatabaseError = '30002',
   AuthError = '40000',
   AccessDeny = '40001',
