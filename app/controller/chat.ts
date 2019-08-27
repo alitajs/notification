@@ -50,14 +50,12 @@ export default class ChatController extends Controller {
   public async insertChatMember() {
     const { accountId: currentAccountId } = this.ctx.request;
     const { accountId, chatId } = this.ctx.params;
-    const [member] = await Promise.all([
-      this.service.chat.insertChatMember(chatId, accountId),
-      this.checkChatMemberType(
-        currentAccountId,
-        chatId,
-        AccountType.chatAdmin | AccountType.chatManager,
-      ),
-    ]);
+    await this.checkChatMemberType(
+      currentAccountId,
+      chatId,
+      AccountType.chatAdmin | AccountType.chatManager,
+    );
+    const member = await this.service.chat.insertChatMember(chatId, accountId);
     this.ctx.body = member.get();
   }
 
@@ -132,24 +130,19 @@ export default class ChatController extends Controller {
   public async removeChatMember() {
     const { accountId: currentAccountId } = this.ctx.request;
     const { accountId, chatId } = this.ctx.params;
-    const [removedCount] = await Promise.all([
-      this.service.chat.removeChatMember(chatId, accountId),
-      this.checkChatMemberType(
-        currentAccountId,
-        chatId,
-        AccountType.chatAdmin | AccountType.chatManager,
-      ),
-    ]);
-    this.ctx.body = removedCount;
+    await this.checkChatMemberType(
+      currentAccountId,
+      chatId,
+      AccountType.chatAdmin | AccountType.chatManager,
+    );
+    this.ctx.body = await this.service.chat.removeChatMember(chatId, accountId);
   }
 
   public async updateChatMemberType() {
     const { accountId: currentAccountId } = this.ctx.request;
     const { accountId, chatId } = this.ctx.params;
-    await Promise.all([
-      this.checkChatMemberType(currentAccountId, chatId, AccountType.chatAdmin),
-      this.service.chat.updateChatMemberType(chatId, accountId, this.ctx.request.body),
-    ]);
+    await this.checkChatMemberType(currentAccountId, chatId, AccountType.chatAdmin);
+    await this.service.chat.updateChatMemberType(chatId, accountId, this.ctx.request.body);
     this.ctx.body = ErrCode.Succeed;
   }
 
