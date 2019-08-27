@@ -13,7 +13,7 @@ export default async (app: Application) => {
 
   /** admin - messages */
   router.del('/admin/chat/:chatId/msg/:msgId', controller.admin.removeMsg);
-  router.del('/admin/chat/spread/read', controller.admin.removeAccount);
+  router.del('/admin/chat/spread/read', controller.admin.removeReadSpreadChats);
   router.get('/admin/chat/spread/read', controller.admin.listReadSpreadChats);
   router.post('/admin/chat/spread/read', controller.admin.insertReadSpreadChats);
 
