@@ -146,6 +146,12 @@ describe('test controller.chat', () => {
           .expect([app.lodash.omit(mockChatInstances[2], 'accountId')]),
         app
           .httpRequest()
+          .get(`/chat/all-chats`)
+          .set('X-Account-Id', '')
+          .set('X-Body-Format', 'json')
+          .expect('X-Error-Code', ErrCode.InvalidParam),
+        app
+          .httpRequest()
           .get(`/chat/list-chats`)
           .set('X-Account-Id', mockAccountId.D)
           .set('X-Body-Format', 'json')
@@ -156,6 +162,12 @@ describe('test controller.chat', () => {
           .set('X-Account-Id', mockAccountId.D)
           .set('X-Body-Format', 'json')
           .expect('X-Error-Code', ErrCode.AccessDeny),
+        app
+          .httpRequest()
+          .get(`/chat/${mockChatId.A}/all-accounts`)
+          .set('X-Account-Id', '')
+          .set('X-Body-Format', 'json')
+          .expect('X-Error-Code', ErrCode.NotFound),
         app
           .httpRequest()
           .get(`/chat/all-unread-counts`)
@@ -172,8 +184,13 @@ describe('test controller.chat', () => {
           .httpRequest()
           .del(`/chat/${mockChatId.A}/account/${mockAccountId.E}`)
           .set('X-Account-Id', mockAccountId.E)
-          .set('X-Body-Format', 'json')
           .expect('X-Error-Code', ErrCode.AccessDeny),
+        app
+          .httpRequest()
+          .del(`/chat/${mockChatId.A}/account/${mockAccountId.E}`)
+          .set('X-Account-Id', '')
+          .set('X-Body-Format', 'none')
+          .expect('X-Error-Code', ErrCode.NotFound),
       ].map(promisifyTestReq),
     );
 
