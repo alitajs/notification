@@ -174,7 +174,8 @@ describe('test controller.admin', () => {
         app
           .httpRequest()
           .del(`/admin/chat/spread/read`)
-          .send(yaml.safeDump([mockChatId.A]))
+          .set('X-Body-Format', 'json')
+          .send(JSON.stringify([mockChatId.A]))
           .expect('X-Error-Code', ErrCode.Succeed),
       ].map(promisifyTestReq),
     );

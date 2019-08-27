@@ -99,6 +99,9 @@ describe('test controller.chat', () => {
     await Promise.all([
       ctx.service.chat.updateChatMsgId(mockChatId.A, 4),
       ctx.service.chat.updateChatMsgId(mockChatId.B, 8),
+    ]);
+
+    await Promise.all([
       ctx.service.chat.updateReadMsg(mockChatId.A, mockAccountId.C, 4),
       ctx.service.chat.updateReadMsg(mockChatId.B, mockAccountId.C, 4),
       ctx.service.chat.updateReadMsg(mockChatId.A, mockAccountId.E, 3),
@@ -168,12 +171,23 @@ describe('test controller.chat', () => {
           .set('X-Account-Id', '')
           .set('X-Body-Format', 'json')
           .expect('X-Error-Code', ErrCode.NotFound),
+      ].map(promisifyTestReq),
+    );
+
+    await Promise.all(
+      [
         app
           .httpRequest()
           .get(`/chat/all-unread-counts`)
           .set('X-Account-Id', mockAccountId.C)
           .set('X-Body-Format', 'json')
           .expect([{ chatId: mockChatId.B, unread: 4 }]),
+        app
+          .httpRequest()
+          .get(`/chat/${mockChatId.B}/msg/4/unread-accounts`)
+          .set('X-Account-Id', mockAccountId.C)
+          .set('X-Body-Format', 'json')
+          .expect([mockAccountId.D]),
         app
           .httpRequest()
           .get(`/chat/list-unread-counts?limit=1`)
