@@ -161,23 +161,6 @@ describe('test controller.chat', () => {
           .expect({ count: 1, rows: [app.lodash.omit(mockChatInstances[2], 'accountId')] }),
         app
           .httpRequest()
-          .get(`/chat/${mockChatId.A}/all-accounts`)
-          .set('X-Account-Id', mockAccountId.D)
-          .set('X-Body-Format', 'json')
-          .expect('X-Error-Code', ErrCode.AccessDeny),
-        app
-          .httpRequest()
-          .get(`/chat/${mockChatId.A}/all-accounts`)
-          .set('X-Account-Id', '')
-          .set('X-Body-Format', 'json')
-          .expect('X-Error-Code', ErrCode.NotFound),
-      ].map(promisifyTestReq),
-    );
-
-    await Promise.all(
-      [
-        app
-          .httpRequest()
           .get(`/chat/all-unread-counts`)
           .set('X-Account-Id', mockAccountId.C)
           .set('X-Body-Format', 'json')
@@ -194,6 +177,23 @@ describe('test controller.chat', () => {
           .set('X-Account-Id', mockAccountId.D)
           .set('X-Body-Format', 'json')
           .expect({ count: 1, rows: [{ chatId: mockChatId.B, unread: 8 }] }),
+      ].map(promisifyTestReq),
+    );
+
+    await Promise.all(
+      [
+        app
+          .httpRequest()
+          .get(`/chat/${mockChatId.A}/all-accounts`)
+          .set('X-Account-Id', mockAccountId.D)
+          .set('X-Body-Format', 'json')
+          .expect('X-Error-Code', ErrCode.AccessDeny),
+        app
+          .httpRequest()
+          .get(`/chat/${mockChatId.A}/all-accounts`)
+          .set('X-Account-Id', '')
+          .set('X-Body-Format', 'json')
+          .expect('X-Error-Code', ErrCode.NotFound),
         app
           .httpRequest()
           .del(`/chat/${mockChatId.A}/account/${mockAccountId.E}`)
@@ -205,6 +205,11 @@ describe('test controller.chat', () => {
           .set('X-Account-Id', '')
           .set('X-Body-Format', 'none')
           .expect('X-Error-Code', ErrCode.NotFound),
+        app
+          .httpRequest()
+          .post(`/chat/all-markasread`)
+          .set('X-Account-Id', mockAccountId.D)
+          .expect('X-Error-Code', ErrCode.Succeed),
       ].map(promisifyTestReq),
     );
 
@@ -214,7 +219,13 @@ describe('test controller.chat', () => {
         .post(`/chat/${mockChatId.B}/account/${mockAccountId.C}/type`)
         .set('X-Account-Id', mockAccountId.D)
         .send('1')
-        .then((res: any) => assert.strictEqual(yaml.safeLoad(res.text), '0')),
+        .then((res: any) => assert.strictEqual(yaml.safeLoad(res.text), ErrCode.Succeed)),
+      app
+        .httpRequest()
+        .post(`/chat/${mockChatId.B}/markasunread`)
+        .set('X-Account-Id', mockAccountId.D)
+        .set('X-Body-Format', 'json')
+        .then((res: any) => assert.strictEqual(yaml.safeLoad(res.text), ErrCode.Succeed)),
       app
         .httpRequest()
         .del(`/chat/${mockChatId.A}/account/${mockAccountId.E}`)
@@ -222,6 +233,14 @@ describe('test controller.chat', () => {
         .set('X-Body-Format', 'json')
         .then((res: any) => assert.strictEqual(res.text, '1')),
     ]);
+
+    assert.strictEqual(await ctx.service.chat.getUnreadCount(mockChatId.B, mockAccountId.D), 1);
+    await app
+      .httpRequest()
+      .post(`/chat/${mockChatId.B}/markasread`)
+      .set('X-Account-Id', mockAccountId.D)
+      .then((res: any) => assert.strictEqual(yaml.safeLoad(res.text), ErrCode.Succeed));
+    assert.strictEqual(await ctx.service.chat.getUnreadCount(mockChatId.B, mockAccountId.D), 0);
 
     assert.strictEqual(
       (await Promise.all([

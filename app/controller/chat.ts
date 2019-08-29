@@ -96,7 +96,7 @@ export default class ChatController extends Controller {
       { readMsgId: (sequelize.literal('`maxMsgId`') as unknown) as number },
       { where: { accountId: attrs.accountId! } },
     );
-    return ErrCode.Succeed;
+    this.ctx.body = ErrCode.Succeed;
   }
 
   public async markAsRead() {
@@ -107,7 +107,7 @@ export default class ChatController extends Controller {
       { readMsgId: (sequelize.literal('`maxMsgId`') as unknown) as number },
       { where: { chatId: attrs.chatId, accountId: attrs.accountId! } },
     );
-    return ErrCode.Succeed;
+    this.ctx.body = ErrCode.Succeed;
   }
 
   public async markAsUnread() {
@@ -124,7 +124,7 @@ export default class ChatController extends Controller {
         },
       },
     );
-    return ErrCode.Succeed;
+    this.ctx.body = ErrCode.Succeed;
   }
 
   public async removeChatMember() {
