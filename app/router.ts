@@ -50,12 +50,12 @@ export default async (app: Application) => {
     '/chat/:chatId/msgs/before-id/:msgId',
     controller.msg.listChatHistoryMsgsQuantitatively,
   );
-  router.put('/chat/:chatId/recall/:creationTime/:msgId', controller.msg.recallMsg);
-  router.put('/chat/:chatId/rerecall/:creationTime/:msgId', controller.msg.retryRecallMsg);
-  router.put('/chat/:chatId/resend/:type/:creationTime/:deDuplicate', controller.msg.resendMsg);
-  router.put('/chat/:chatId/send/:type/:creationTime/:deDuplicate', controller.msg.sendMsg);
-  router.put('/chat/:chatId/resend-text/:creationTime/:deDuplicate', controller.msg.resendText);
-  router.put('/chat/:chatId/send-text/:creationTime/:deDuplicate', controller.msg.sendText);
+  router.post('/chat/:chatId/recall/:creationTime/:msgId', controller.msg.recallMsg);
+  router.post('/chat/:chatId/rerecall/:creationTime/:msgId', controller.msg.retryRecallMsg);
+  router.post('/chat/:chatId/resend/:type/:creationTime/:deDuplicate', controller.msg.resendMsg);
+  router.post('/chat/:chatId/send/:type/:creationTime/:deDuplicate', controller.msg.sendMsg);
+  router.post('/chat/:chatId/resend-text/:creationTime/:deDuplicate', controller.msg.resendText);
+  router.post('/chat/:chatId/send-text/:creationTime/:deDuplicate', controller.msg.sendText);
 
   /** chat - chat admin */
   router.del('/chat/:chatId/account/:accountId', controller.chat.removeChatMember);
