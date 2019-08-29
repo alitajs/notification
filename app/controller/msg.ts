@@ -1,3 +1,4 @@
+import { AccountType } from '@/service/chat';
 import { MsgType } from '@/service/msg';
 import { validatePagination } from '@/utils';
 import { AccessDeny, NotFound } from '@/utils/errorcode';
@@ -53,7 +54,9 @@ export default class MsgController extends Controller {
   }
 
   public async recallMsg() {
+    const { accountId } = this.ctx.request;
     const { chatId, creationTime, msgId: recallMsgId } = this.ctx.params;
+    await this.checkIsAbleToRecall(chatId, recallMsgId, accountId);
     const msgrepo = await this.service.msg.sendMsg(
       chatId,
       recallMsgId,
@@ -88,7 +91,9 @@ export default class MsgController extends Controller {
   }
 
   public async retryRecallMsg() {
+    const { accountId } = this.ctx.request;
     const { chatId, creationTime, msgId: recallMsgId } = this.ctx.params;
+    await this.checkIsAbleToRecall(chatId, recallMsgId, accountId);
     const msgrepo = await this.service.msg.resendMsg(
       chatId,
       recallMsgId,
@@ -127,5 +132,22 @@ export default class MsgController extends Controller {
     const isChatMember = await this.service.chat.isChatMember(accountId!, chatId);
     if (!isChatMember)
       throw new AccessDeny(`\`${accountId}\` is not a member of chat \`${chatId}\``);
+  }
+
+  private async checkIsAbleToRecall(chatId: string, msgId: number, accountId: string | null) {
+    if (!accountId) throw new NotFound('account does not exists');
+    const [msgrepo, isManager] = await Promise.all([
+      this.service.msg.getMsgrepo(chatId, msgId),
+      this.service.chat.chatMemberHasType(
+        chatId,
+        accountId,
+        AccountType.chatAdmin | AccountType.chatManager,
+      ),
+    ]);
+    if (msgrepo) {
+      if (isManager) return true;
+      if (msgrepo.senderId === accountId) return true;
+    }
+    throw new AccessDeny('only the sender or chat manager can recall the message');
   }
 }
