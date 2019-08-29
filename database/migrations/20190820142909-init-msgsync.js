@@ -2,7 +2,7 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    const { CHAR, INTEGER, STRING, TEXT } = Sequelize;
+    const { BIGINT, CHAR, INTEGER, STRING, TEXT } = Sequelize;
     await queryInterface.createTable('Msgsync', {
       chatId: {
         type: CHAR(22),
@@ -13,7 +13,7 @@ module.exports = {
         allowNull: false,
       },
       creationTime: {
-        type: INTEGER,
+        type: BIGINT,
         allowNull: false,
       },
       deDuplicate: {

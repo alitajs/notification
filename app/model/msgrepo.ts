@@ -1,7 +1,7 @@
 import { extendsModel } from '@/utils';
 import { DefineModel } from '@/utils/types';
 import { Application } from 'egg';
-import { CHAR, INTEGER, Instance, STRING, TEXT } from 'sequelize';
+import { BIGINT, CHAR, INTEGER, Instance, STRING, TEXT } from 'sequelize';
 import yamlJoi from 'yaml-joi';
 
 export interface Msgrepo {
@@ -26,7 +26,7 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
       allowNull: false,
     },
     creationTime: {
-      type: INTEGER,
+      type: BIGINT,
       allowNull: false,
     },
     deDuplicate: {

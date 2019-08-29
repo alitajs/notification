@@ -28,6 +28,18 @@ export default class MsgService extends Service {
   };
 
   /**
+   * Get one message from the message persistent repository by `chatId` and `msgId`.
+   */
+  public async getMsgrepo(chatId: string, msgId: number) {
+    const where = validateAttr(DefineMsgrepo, { chatId, msgId });
+    const msgrepo = await this.ctx.model.Msgrepo.findOne({
+      attributes: { exclude: ['chatId', 'msgId'] },
+      where,
+    });
+    return msgrepo && ({ ...msgrepo.get(), ...where } as Msgrepo);
+  }
+
+  /**
    * Get a strictly self-increasing message id.
    * @description
    * Try to get next id from *redis* by `INCR` command first, if it fails,
@@ -231,6 +243,9 @@ export default class MsgService extends Service {
     return msgrepo;
   }
 
+  /**
+   * Update the type of one message in the message persistent repository.
+   */
   public updateMsgrepoType(chatId: string, msgId: number, type: number | null) {
     const where = validateAttr(DefineMsgrepo, { chatId, msgId });
     return this.ctx.model.Msgrepo.updateEvenIfEmpty(validateAttr(DefineMsgrepo, { type }), {
