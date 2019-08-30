@@ -205,7 +205,7 @@ describe('test controller.msg', () => {
         rej();
       }, 1000);
       const intervalId = setInterval(() => {
-        if (ctx.syncedMsgId !== 3) return res();
+        if (ctx.syncedMsgId !== msgs.length) return res();
         clearTimeout(timeoutId);
         clearInterval(intervalId);
       }, 10);
@@ -250,6 +250,23 @@ describe('test controller.msg', () => {
           .set('X-Body-Format', 'json')
           .expect(msgs.slice(2, 3).map(msg => app.lodash.omit(msg, 'chatId'))),
       ].map(promisifyTestReq),
+    );
+
+    await promisifyTestReq(
+      app
+        .httpRequest()
+        .del(`/admin/chat/${mockChatId}/msg/${msgs[5].msgId}`)
+        .set('X-Body-Format', 'json')
+        .expect([1, 2]),
+    );
+
+    await promisifyTestReq(
+      app
+        .httpRequest()
+        .get(`/chat/${mockChatId}/msgs?limit=1`)
+        .set('X-Account-Id', mockAccountId.A)
+        .set('X-Body-Format', 'json')
+        .expect(msgs.slice(4, 5).map(msg => app.lodash.omit(msg, 'chatId'))),
     );
   });
 });
