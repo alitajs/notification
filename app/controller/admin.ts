@@ -29,8 +29,7 @@ limitation:
 
   public async insertChatMember() {
     const { accountId, chatId } = this.ctx.params;
-    const member = await this.service.chat.insertChatMember(chatId, accountId);
-    this.ctx.body = member.get();
+    this.ctx.body = await this.service.chat.insertChatMember(chatId, accountId);
   }
 
   public async insertReadSpreadChats() {

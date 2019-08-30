@@ -71,6 +71,20 @@ describe('test controller.msg', () => {
       [
         app
           .httpRequest()
+          .post(`/chat/${mockChatId}/send/0/${Date.now()}/holder`)
+          .set('X-Account-Id', '')
+          .set('X-Body-Format', 'none')
+          .send('this account does not exists')
+          .expect('X-Error-Code', ErrCode.NotFound),
+        app
+          .httpRequest()
+          .post(`/chat/${mockChatId}/send/0/${Date.now()}/holder`)
+          .set('X-Account-Id', SUUID(18))
+          .set('X-Body-Format', 'none')
+          .send('this account is not a member of chat session')
+          .expect('X-Error-Code', ErrCode.AccessDeny),
+        app
+          .httpRequest()
           .post(`/chat/${mockChatId}/recall/${creationTime.get(deDuplicate[2])}/2`)
           .set('X-Account-Id', mockAccountId.B)
           .set('X-Body-Format', 'json')

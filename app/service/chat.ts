@@ -1,5 +1,5 @@
 import { Chat, DefineChat } from '@/model/chat';
-import { validateAttr } from '@/utils';
+import { validateAttr, validateModel } from '@/utils';
 import { Service } from 'egg';
 import sequelize from 'sequelize';
 
@@ -76,9 +76,8 @@ export default class ChatService extends Service {
   }
 
   public async insertChatMember(chatId: string, accountId: string) {
-    const where = validateAttr(DefineChat, { accountId, chatId });
-    // use `findOrCreate` to ensure `Union(chatId, accountId)` is unique.
-    const [instance] = await this.ctx.model.Chat.findOrCreate({ where });
+    const instance = validateModel(DefineChat, { chatId, accountId });
+    await this.ctx.model.Chat.upsert(instance, { fields: ['chatId', 'accountId'] });
     return instance;
   }
 

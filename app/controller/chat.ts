@@ -55,8 +55,7 @@ export default class ChatController extends Controller {
       chatId,
       AccountType.chatAdmin | AccountType.chatManager,
     );
-    const member = await this.service.chat.insertChatMember(chatId, accountId);
-    this.ctx.body = member.get();
+    this.ctx.body = await this.service.chat.insertChatMember(chatId, accountId);
   }
 
   public async listAccountChats() {

@@ -27,12 +27,11 @@ module.exports = {
         defaultValue: null,
       },
     });
-    // await queryInterface.addConstraint('Chat', ['chatId', 'accountId'], {
-    //   type: 'primary key',
-    //   name: 'PrimaryKey',
-    // });
+    await queryInterface.addConstraint('Chat', ['chatId', 'accountId'], {
+      type: 'primary key',
+      name: 'PrimaryKey',
+    });
     await queryInterface.addIndex('Chat', { name: 'accountIdIndex', fields: ['accountId'] });
-    await queryInterface.addIndex('Chat', { name: 'chatIdIndex', fields: ['chatId'] });
   },
 
   down: async queryInterface => {

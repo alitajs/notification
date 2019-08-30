@@ -89,8 +89,8 @@ export const DefineChat: DefineModel<Chat> = {
 export default (app: Application) => {
   const ChatModel = app.model.define<Instance<Chat>, Chat>('Chat', DefineChat.Attr, {
     indexes: [
+      { name: 'PrimaryKey', unique: true, fields: ['chatId', 'accountId'] },
       { name: 'accountIdIndex', fields: ['accountId'] },
-      { name: 'chatIdIndex', fields: ['chatId'] },
     ],
   });
   ChatModel.removeAttribute('id');
