@@ -107,9 +107,9 @@ export default class MsgService extends Service {
    * `msgId` from large to small.
    */
   public listChatHistoryMsgsQuantitatively(chatId: string, limit?: number, beforeMsgId?: number) {
-    const attrs = validateAttr(DefineMsgrepo, { chatId, msgId: beforeMsgId });
+    const attrs = validateAttr(DefineMsgrepo, { chatId, msgId: beforeMsgId || 0 });
     const where: WhereOptions<Msgrepo> = { chatId: attrs.chatId };
-    if (attrs.msgId) where.msgId = { [Op.lt]: attrs.msgId };
+    if (beforeMsgId !== undefined) where.msgId = { [Op.lt]: attrs.msgId };
     return this.ctx.model.Msgrepo.findAll({ limit, order: [['msgId', 'DESC']], where });
   }
 
