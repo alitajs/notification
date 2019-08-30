@@ -14,7 +14,7 @@ export interface Msgrepo {
   type: number | null;
 }
 
-// TODO: check the usage of indexes (created by primary key) with sequelize
+// check the usage of indexes in sequelize
 export const DefineMsgrepo: DefineModel<Msgrepo> = {
   Attr: {
     chatId: {

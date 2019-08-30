@@ -69,7 +69,9 @@ export default class MsgController extends Controller {
   }
 
   public async resendMsg() {
+    const { accountId } = this.ctx.request;
     const { chatId, creationTime, deDuplicate, type } = this.ctx.params;
+    await this.checkIsChatMember(accountId, chatId);
     this.ctx.body = await this.service.msg.resendMsg(
       chatId,
       this.ctx.request.body,
@@ -80,7 +82,9 @@ export default class MsgController extends Controller {
   }
 
   public async resendText() {
+    const { accountId } = this.ctx.request;
     const { chatId, creationTime, deDuplicate } = this.ctx.params;
+    await this.checkIsChatMember(accountId, chatId);
     this.ctx.body = await this.service.msg.resendMsg(
       chatId,
       this.ctx.request.body,
@@ -106,7 +110,9 @@ export default class MsgController extends Controller {
   }
 
   public async sendMsg() {
+    const { accountId } = this.ctx.request;
     const { chatId, creationTime, deDuplicate, type } = this.ctx.params;
+    await this.checkIsChatMember(accountId, chatId);
     this.ctx.body = await this.service.msg.sendMsg(
       chatId,
       this.ctx.request.body,
@@ -117,7 +123,9 @@ export default class MsgController extends Controller {
   }
 
   public async sendText() {
+    const { accountId } = this.ctx.request;
     const { chatId, creationTime, deDuplicate } = this.ctx.params;
+    await this.checkIsChatMember(accountId, chatId);
     this.ctx.body = await this.service.msg.sendMsg(
       chatId,
       this.ctx.request.body,
