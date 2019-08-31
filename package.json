@@ -9,6 +9,8 @@
     "start:redis": "sudo redis-server /etc/redis-5.0.5/redis.conf",
     "start:migrate": "cross-env NODE_ENV=production sequelize db:migrate",
     "restart:tsc": "npm run stop && npm run tsc && npm run start",
+    "dev:migrate": "sequelize db:migrate",
+    "dev:unmigrate": "sequelize db:migrate:undo:all",
     "dev": "egg-bin dev",
     "debug": "egg-bin debug",
     "test": "cross-env NODE_ENV=test EGG_SERVER_ENV=unittest egg-bin test",
