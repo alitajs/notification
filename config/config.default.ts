@@ -1,3 +1,4 @@
+import { ChoreConfig } from '@/middleware/chore';
 import { ParserConfig } from '@/middleware/parser';
 import { EggAppConfig, EggAppInfo, PowerPartial } from 'egg';
 import { ClientOpts as RedisOpts } from 'redis';
@@ -42,6 +43,10 @@ export default (appInfo: EggAppInfo): PowerPartial<EggAppConfig> & typeof bizCon
   } as RedisOpts;
 
   config.parser = {} as ParserConfig;
+
+  config.chore = {
+    defaultAccountId: null,
+  } as ChoreConfig;
 
   /**
    * Other configuration for controller or service

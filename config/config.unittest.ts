@@ -1,3 +1,4 @@
+import { ChoreConfig } from '@/middleware/chore';
 import { EggAppConfig, PowerPartial } from 'egg';
 import { ClientOpts as RedisOpts } from 'redis';
 
@@ -25,6 +26,9 @@ export default () => {
     redis: {
       prefix: 'notification_test:',
     } as RedisOpts,
+    chore: {
+      defaultAccountId: ctx => ctx.request.get('X-Account-Id'),
+    } as ChoreConfig,
   };
   return config;
 };
