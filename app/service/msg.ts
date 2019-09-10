@@ -2,7 +2,7 @@ import { DefineMsgrepo, Msgrepo } from '@/model/msgrepo';
 import { DefineMsgsync, Msgsync } from '@/model/msgsync';
 import { delVoid, retryAsync, validateAttr, validateModel } from '@/utils';
 import { ArgsType } from '@/utils/types';
-import { Service } from 'egg';
+import { Context, Service } from 'egg';
 import { Op, WhereOptions } from 'sequelize';
 
 export const enum MsgType {
@@ -26,6 +26,11 @@ export default class MsgService extends Service {
   static RetryTimes = {
     InsertMsgrepo: 1,
   };
+
+  constructor(ctx: Context) {
+    super(ctx);
+    this.retryInsertMsgrepo = this.retryInsertMsgrepo.bind(this);
+  }
 
   /**
    * Get one message from the message persistent repository by `chatId` and `msgId`.
@@ -355,18 +360,18 @@ export default class MsgService extends Service {
       ]);
     } catch (error) {
       this.app.hook.onProtectedUpdateChatAndReadMsgIdFailed.safeExec(this.ctx, msgrepo);
-      await this.app.hook.onProtectedUpdateChatAndReadMsgIdFailedAsync.safeExec(this.ctx, msgrepo);
+      await this.app.hook.onProtectedUpdateChatAndReadMsgIdFailedAsync.safeWait(this.ctx, msgrepo);
     }
   }
 
-  private async retryInsertMsgrepo(messageOmitMsgId: Omit<Msgrepo, 'msgId'>) {
-    const alreadyExistsOne = await this.findMsgrepoByDeDuplicateString(messageOmitMsgId);
+  private async retryInsertMsgrepo(msgrepoOmitMsgId: Omit<Msgrepo, 'msgId'>) {
+    const alreadyExistsOne = await this.findMsgrepoByDeDuplicateString(msgrepoOmitMsgId);
     if (alreadyExistsOne) return alreadyExistsOne;
-    const message: Msgrepo = {
-      ...messageOmitMsgId,
-      msgId: await this.getNextMsgId(messageOmitMsgId.chatId),
+    const msgrepo: Msgrepo = {
+      ...msgrepoOmitMsgId,
+      msgId: await this.getNextMsgId(msgrepoOmitMsgId.chatId),
     };
-    await this.ctx.model.Msgrepo.create(message);
-    return message;
+    await this.ctx.model.Msgrepo.create(msgrepo);
+    return msgrepo;
   }
 }

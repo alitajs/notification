@@ -4,7 +4,6 @@ import 'tsconfig-paths/register';
 import { Msgrepo } from '@/model/msgrepo';
 import { MsgType } from '@/service/msg';
 import { ErrCode, SUUID, promisifyTestReq } from '@/utils';
-import assert from 'assert';
 import { app } from 'egg-mock/bootstrap';
 
 const timestamp = Date.now();
@@ -69,8 +68,10 @@ const msgs: Msgrepo[] = [
     type: MsgType.recall,
   },
 ];
-const msgsASC = [...msgs].sort((a, b) => a.creationTime - b.creationTime);
-const msgsDESC = [...msgsASC].reverse();
+const refMsgsASC = [...msgs].sort((a, b) => a.creationTime - b.creationTime);
+const refMsgsDESC = [...refMsgsASC].reverse();
+const copyMsgsASC = refMsgsASC.map(msg => ({ ...msg }));
+const copyMsgsDESC = refMsgsDESC.map(msg => ({ ...msg }));
 
 describe('test controller.msg', () => {
   beforeEach(async () => {
@@ -82,10 +83,6 @@ describe('test controller.msg', () => {
     /** initialize */
     const ctx = app.mockContext();
     ctx.syncedMsgId = 0;
-    app.hook.onProtectedInsertMsgsyncFailed((_, msgrepo) => assert.strictEqual(msgrepo, undefined));
-    app.hook.onProtectedUpdateChatAndReadMsgIdFailed((_, msgrepo) =>
-      assert.strictEqual(msgrepo, undefined),
-    );
     app.hook.afterInsertMsgsync((_, msgrepo) => {
       ctx.syncedMsgId = msgrepo.msgId;
     });
@@ -234,13 +231,13 @@ describe('test controller.msg', () => {
           .get(`/chat/recent-msgs?limit=3`)
           .set('X-Account-Id', mockAccountId.B)
           .set('X-Body-Format', 'json')
-          .expect(msgsDESC.slice(0, 3)),
+          .expect(copyMsgsDESC.slice(0, 3)),
         app
           .httpRequest()
-          .get(`/chat/recent-msgs/after-time/${msgsASC[3].creationTime}?limit=2`)
+          .get(`/chat/recent-msgs/after-time/${copyMsgsASC[3].creationTime}?limit=2`)
           .set('X-Account-Id', mockAccountId.A)
           .set('X-Body-Format', 'json')
-          .expect(msgsASC.slice(4, 6)),
+          .expect(copyMsgsASC.slice(4, 6)),
         app
           .httpRequest()
           .get(`/chat/${mockChatId}/msgs?limit=1`)
@@ -255,10 +252,10 @@ describe('test controller.msg', () => {
           .expect(msgs.slice(1, 2).map(msg => app.lodash.omit(msg, 'chatId'))),
         app
           .httpRequest()
-          .get(`/chat/${mockChatId}/msgs/after-time/${msgsASC[1].creationTime}?limit=1`)
+          .get(`/chat/${mockChatId}/msgs/after-time/${refMsgsASC[1].creationTime}?limit=1`)
           .set('X-Account-Id', mockAccountId.A)
           .set('X-Body-Format', 'json')
-          .expect(msgsASC.slice(2, 3).map(msg => app.lodash.omit(msg, 'chatId'))),
+          .expect(refMsgsASC.slice(2, 3).map(msg => app.lodash.omit(msg, 'chatId'))),
         app
           .httpRequest()
           .get(`/chat/${mockChatId}/msgs/before-id/${msgs[3].msgId}?limit=1`)
