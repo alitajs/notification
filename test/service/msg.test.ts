@@ -1,32 +1,11 @@
 import 'mocha';
 import 'tsconfig-paths/register';
 
-import { Chat } from '@/model/chat';
 import { SUUID } from '@/utils';
 import assert from 'assert';
 import { app } from 'egg-mock/bootstrap';
 
 const mockChatId = SUUID(22);
-const mockAccountId = {
-  A: SUUID(18),
-  B: SUUID(18),
-};
-const mockChatInstances: Chat[] = [
-  {
-    accountId: mockAccountId.A,
-    chatId: mockChatId,
-    maxMsgId: 0,
-    readMsgId: 0,
-    type: 1,
-  },
-  {
-    accountId: mockAccountId.B,
-    chatId: mockChatId,
-    maxMsgId: 0,
-    readMsgId: 0,
-    type: null,
-  },
-];
 
 describe('test service.msg', () => {
   beforeEach(async () => {
@@ -36,22 +15,14 @@ describe('test service.msg', () => {
 
   it('test service.msg', async () => {
     /** initialize */
-    const ctx = app.mockContext();
+    const ctx = app.mockContext({
+      request: { accountId: SUUID(18) },
+    });
     const service = ctx.service.msg;
 
-    /** create fake data */
-    await Promise.all(
-      mockChatInstances.map(instance =>
-        ctx.service.chat.insertChatMember(instance.chatId, instance.accountId),
-      ),
-    );
-    await Promise.all(
-      mockChatInstances.map(instance =>
-        ctx.service.chat.updateChatMemberType(instance.chatId, instance.accountId, instance.type),
-      ),
-    );
-
     /** start test methods */
-    assert.strictEqual((await service.listChatHistoryMsgs(mockChatId, 0)).length, 0);
+    await ctx.service.spread.insertReadSpreadChats(mockChatId);
+    assert.doesNotReject(service.sendMsg(mockChatId, '', SUUID(6), Date.now(), null));
+    assert.rejects(service.sendMsg(mockChatId, '', SUUID(6), Date.now(), Math.pow(2, 32)));
   });
 });
