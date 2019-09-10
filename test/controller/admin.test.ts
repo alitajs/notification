@@ -92,7 +92,7 @@ describe('test controller.admin', () => {
         app
           .httpRequest()
           .post(`/admin/chat/${mockChatId.A}/account/${mockAccountId.E}`)
-          .set('X-Body-Format', 'json')
+          .set('X-Response-Body-Format', 'json')
           .expect('X-Error-Code', ErrCode.Succeed),
         app
           .httpRequest()

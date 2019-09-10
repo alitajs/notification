@@ -8,6 +8,20 @@ export interface ParserConfig {
    * 'X-Body-Format'
    */
   formatHeader?: string;
+  /**
+   * Parse request body according to this field.
+   * Use the value of header `formatHeader('X-Body-Format')` as fallback.
+   * @default
+   * 'X-Request-Body-Format'
+   */
+  requestFormatHeader?: string;
+  /**
+   * Stringify response body according to this field.
+   * Use the value of header `formatHeader('X-Body-Format')` as fallback.
+   * @default
+   * 'X-Response-Body-Format'
+   */
+  responseFormatHeader?: string;
 }
 
 function reqBody(ctx: Context, formatType: string) {
@@ -49,11 +63,17 @@ function resBody(ctx: Context, formatType: string) {
   } catch {}
 }
 
-export default ({ formatHeader = 'X-Body-Format' }: ParserConfig = {}) => {
+export default ({
+  formatHeader = 'X-Body-Format',
+  requestFormatHeader = 'X-Request-Body-Format',
+  responseFormatHeader = 'X-Response-Body-Format',
+}: ParserConfig = {}) => {
   return async function parser(ctx: Context, next: () => Promise<any>) {
-    const formatType = ctx.get(formatHeader).toLowerCase();
-    reqBody(ctx, formatType);
+    const formatType = ctx.get(formatHeader);
+    const requestFormatType = ctx.get(requestFormatHeader) || formatType;
+    const responseFormatType = ctx.get(responseFormatHeader) || formatType;
+    reqBody(ctx, requestFormatType.toLowerCase());
     await next();
-    resBody(ctx, formatType);
+    resBody(ctx, responseFormatType.toLowerCase());
   };
 };
