@@ -34,7 +34,7 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
       allowNull: false,
     },
     msgId: {
-      type: INTEGER,
+      type: INTEGER.UNSIGNED,
       allowNull: false,
     },
     senderId: {
@@ -42,7 +42,7 @@ export const DefineMsgrepo: DefineModel<Msgrepo> = {
       allowNull: false,
     },
     type: {
-      type: INTEGER,
+      type: INTEGER.UNSIGNED,
     },
   },
   Sample: {

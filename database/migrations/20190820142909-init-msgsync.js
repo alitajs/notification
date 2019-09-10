@@ -21,7 +21,7 @@ module.exports = {
         allowNull: false,
       },
       msgId: {
-        type: INTEGER,
+        type: INTEGER.UNSIGNED,
         allowNull: false,
       },
       recipientId: {
@@ -33,7 +33,7 @@ module.exports = {
         allowNull: false,
       },
       type: {
-        type: INTEGER,
+        type: INTEGER.UNSIGNED,
       },
     });
     await queryInterface.addConstraint('Msgsync', ['recipientId', 'chatId', 'msgId'], {

@@ -21,7 +21,7 @@ module.exports = {
         allowNull: false,
       },
       msgId: {
-        type: INTEGER,
+        type: INTEGER.UNSIGNED,
         allowNull: false,
       },
       senderId: {
@@ -29,7 +29,7 @@ module.exports = {
         allowNull: false,
       },
       type: {
-        type: INTEGER,
+        type: INTEGER.UNSIGNED,
       },
     });
     await queryInterface.addConstraint('Msgrepo', ['chatId', 'msgId'], {

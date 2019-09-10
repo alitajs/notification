@@ -26,17 +26,17 @@ export const DefineChat: DefineModel<Chat> = {
       allowNull: false,
     },
     maxMsgId: {
-      type: INTEGER,
+      type: INTEGER.UNSIGNED,
       allowNull: false,
       defaultValue: 0,
     },
     readMsgId: {
-      type: INTEGER,
+      type: INTEGER.UNSIGNED,
       allowNull: false,
       defaultValue: 0,
     },
     type: {
-      type: INTEGER,
+      type: INTEGER.UNSIGNED,
       defaultValue: null,
     },
   },
