@@ -38,7 +38,10 @@ export default async (app: Application) => {
 
   /** chat - messages */
   router.get('/chat/recent-msgs', controller.msg.listRecentMsgsQuantitatively);
-  router.get('/chat/recent-msgs/after-time/:creationTime', controller.msg.listRecentMsgs);
+  router.get(
+    '/chat/recent-msgs/after-time/:creationTime',
+    controller.msg.listRecentMsgs,
+  ); /** @deprecated */
   router.get('/chat/:chatId/msg/:msgId/unread-accounts', controller.chat.getMsgUnreadAccounts);
   router.get('/chat/:chatId/msgs', controller.msg.listChatHistoryMsgsQuantitatively);
   router.get('/chat/:chatId/msgs/after-id/:msgId', controller.msg.listChatHistoryMsgs);
