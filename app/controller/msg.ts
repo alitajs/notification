@@ -64,7 +64,10 @@ export default class MsgController extends Controller {
       creationTime,
       MsgType.recall,
     );
-    // await this.service.msg.updateMsgrepoType(msgrepo.chatId, msgrepo.msgId, MsgType.recalled);
+    await this.service.msg.updateMsgrepoAttrs(msgrepo.chatId, recallMsgId, {
+      content: '',
+      type: MsgType.recalled,
+    });
     this.ctx.body = msgrepo;
   }
 
@@ -105,7 +108,10 @@ export default class MsgController extends Controller {
       creationTime,
       MsgType.recall,
     );
-    // await this.service.msg.updateMsgrepoType(msgrepo.chatId, msgrepo.msgId, MsgType.recalled);
+    await this.service.msg.updateMsgrepoAttrs(msgrepo.chatId, recallMsgId, {
+      content: '',
+      type: MsgType.recalled,
+    });
     this.ctx.body = msgrepo;
   }
 

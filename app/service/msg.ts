@@ -1,6 +1,6 @@
 import { DefineMsgrepo, Msgrepo } from '@/model/msgrepo';
 import { DefineMsgsync, Msgsync } from '@/model/msgsync';
-import { retryAsync, validateAttr, validateModel } from '@/utils';
+import { delVoid, retryAsync, validateAttr, validateModel } from '@/utils';
 import { ArgsType } from '@/utils/types';
 import { Service } from 'egg';
 import { Op, WhereOptions } from 'sequelize';
@@ -244,13 +244,18 @@ export default class MsgService extends Service {
   }
 
   /**
-   * Update the type of one message in the message persistent repository.
+   * Update the attributes of one message in the message persistent repository.
    */
-  public updateMsgrepoType(chatId: string, msgId: number, type: number | null) {
-    const where = validateAttr(DefineMsgrepo, { chatId, msgId });
-    return this.ctx.model.Msgrepo.updateEvenIfEmpty(validateAttr(DefineMsgrepo, { type }), {
-      where,
-    });
+  public updateMsgrepoAttrs(
+    chatId: string,
+    msgId: number,
+    attrs: Partial<Omit<Msgrepo, 'chatId' | 'msgId'>>,
+  ): Promise<[number, any[]]> {
+    const pInstance = validateAttr(DefineMsgrepo, delVoid({ ...attrs, chatId, msgId }));
+    const where = this.app.lodash.pick(pInstance, 'chatId', 'msgId');
+    const updates = this.app.lodash.omit(pInstance, 'chatId', 'msgId');
+    if (!Object.keys(updates).length) return Promise.resolve([0, []]);
+    return this.ctx.model.Msgrepo.updateEvenIfEmpty(updates, { where });
   }
 
   /** private methods */

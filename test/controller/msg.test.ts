@@ -102,7 +102,8 @@ describe('test controller.msg', () => {
         .httpRequest()
         .post(`/chat/${mockChatId}/send/0/${msgs[0].creationTime}/${msgs[0].deDuplicate}`)
         .set('X-Account-Id', msgs[0].senderId)
-        .set('X-Body-Format', 'json')
+        .set('X-Response-Body-Format', 'json')
+        .set('X-Request-Body-Format', 'json')
         .send(JSON.stringify(msgs[0].content))
         .expect(msgs[0]),
     );
@@ -144,8 +145,18 @@ describe('test controller.msg', () => {
           .set('X-Account-Id', mockAccountId.A)
           .set('X-Body-Format', 'json')
           .expect('X-Error-Code', ErrCode.AccessDeny),
+        app
+          .httpRequest()
+          .post(`/chat/${mockChatId}/recall/${msgs[2].creationTime}/${msgs[2].content}`)
+          .set('X-Body-Format', 'json')
+          .expect('X-Error-Code', ErrCode.NotFound),
       ].map(promisifyTestReq),
     );
+
+    Object.assign(msgs[1], {
+      content: '',
+      type: MsgType.recalled,
+    });
 
     await Promise.all(
       [
@@ -198,6 +209,11 @@ describe('test controller.msg', () => {
         .set('X-Body-Format', 'json')
         .expect(msgs[5]),
     );
+
+    Object.assign(msgs[3], {
+      content: '',
+      type: MsgType.recalled,
+    });
 
     await new Promise((res, rej) => {
       const timeoutId = setTimeout(() => {
