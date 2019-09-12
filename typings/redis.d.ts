@@ -321,16 +321,6 @@ declare module 'redis' {
     SADD: OverloadedKeyCommand<string, number, R>;
 
     /**
-     * DEBUG - Set the debug mode for executed scripts.
-     * EXISTS - Check existence of scripts in the script cache.
-     * FLUSH - Remove all scripts from the script cache.
-     * KILL - Kill the script currently in execution.
-     * LOAD - Load the specified Lua script into the script cache.
-     */
-    script: OverloadedCommand<string, any, R>;
-    SCRIPT: OverloadedCommand<string, any, R>;
-
-    /**
      * Subtract multiple sets.
      */
     sdiff: OverloadedCommand<string, string[], R>;
@@ -443,6 +433,33 @@ declare module 'redis' {
      */
     zscan: OverloadedKeyCommand<string, [string, string[]], R>;
     ZSCAN: OverloadedKeyCommand<string, [string, string[]], R>;
+
+    /**
+     * DEBUG - Set the debug mode for executed scripts.
+     * EXISTS - Check existence of scripts in the script cache.
+     * FLUSH - Remove all scripts from the script cache.
+     * KILL - Kill the script currently in execution.
+     * LOAD - Load the specified Lua script into the script cache.
+     */
+    // script: OverloadedCommand<string, any, R>;
+    // SCRIPT: OverloadedCommand<string, any, R>;
+
+    /**
+     * Check existence of scripts in the script cache.
+     */
+    script(run: 'EXISTS', ...scriptsSha1: string[]): Promise<number[]>;
+    SCRIPT(run: 'EXISTS', ...scriptsSha1: string[]): Promise<number[]>;
+    /**
+     * FLUSH - Remove all scripts from the script cache.
+     * KILL - Kill the script currently in execution.
+     */
+    script(run: 'FLUSH' | 'KILL'): Promise<'OK'>;
+    SCRIPT(run: 'FLUSH' | 'KILL'): Promise<'OK'>;
+    /**
+     * Load the specified Lua script into the script cache.
+     */
+    script(run: 'LOAD', script: string): Promise<string>;
+    SCRIPT(run: 'LOAD', script: string): Promise<string>;
     /**
      * Listen for all requests received by the server in real time.
      */

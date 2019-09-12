@@ -56,7 +56,8 @@ async function extendLuaScripts(client: PromisifiedCommands) {
           ...args.map(arg => (arg === undefined ? '' : arg.toString())),
         );
       } catch (error) {
-        if (await client.script('EXISTS', Scripts[name])) throw error;
+        const [alreadyLoaded] = await client.script('EXISTS', ScriptsSha1[name]);
+        if (alreadyLoaded) throw error;
         await loadScript(client, name);
         return methods[name](keys, ...args);
       }

@@ -49,7 +49,8 @@ describe('test extend.app.redis', () => {
     let [key, value] = [SUUID(), 3];
     assert.strictEqual(await app.redis.incrx([key]), 0);
     assert.strictEqual(await app.redis.incrsetnx([key], value), ++value);
-    assert.strictEqual(await app.redis.incrx([key]), ++value);
+    await app.redis.script('FLUSH');
+    assert.strictEqual(await app.redis.incrx([key], 0), 1);
     await app.redis.del(key);
   });
 });
