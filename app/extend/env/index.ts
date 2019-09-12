@@ -7,7 +7,7 @@ export interface EnvExtension {
 }
 
 const isEnv = new Map<Env, (app: Application) => boolean>([
-  [Env.Dev, app => !app.isEnv(Env.Dev) && !app.isEnv(Env.Test)],
+  [Env.Production, app => !app.isEnv(Env.Dev) && !app.isEnv(Env.Test)],
   [
     Env.Dev,
     () =>
