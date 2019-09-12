@@ -20,9 +20,6 @@ export const enum MsgType {
 export default class MsgService extends Service {
   static MsgIdRedisExpire = 7 * 24 * 60 * 60;
   static MsgsyncChunk = 500;
-  static RedisKey = {
-    MsgId: (chatId: string) => `msgid:${chatId}`,
-  };
   static RetryTimes = {
     InsertMsgrepo: 1,
   };
