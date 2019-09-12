@@ -6,6 +6,10 @@ import assert from 'assert';
 import { app } from 'egg-mock/bootstrap';
 
 describe('test env', () => {
+  it('test extend.app.noop', () => {
+    assert.strictEqual(app.noop(), undefined);
+  });
+
   it('is unit test', () => {
     assert.strictEqual(process.env.NODE_ENV, 'test');
     assert.strictEqual(process.env.EGG_SERVER_ENV, 'unittest');
