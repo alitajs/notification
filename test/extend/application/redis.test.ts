@@ -51,6 +51,12 @@ describe('test extend.app.redis', () => {
     assert.strictEqual(await app.redis.incrsetnx([key], value), ++value);
     await app.redis.script('FLUSH');
     assert.strictEqual(await app.redis.incrx([key], 0), 1);
+    assert(
+      await app.redis
+        .incrx([key], ('abc' as unknown) as number)
+        .then(() => false)
+        .catch(err => !!err),
+    );
     await app.redis.del(key);
   });
 });
