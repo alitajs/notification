@@ -1,5 +1,5 @@
 import { validatePagination } from '@/utils';
-import { ErrCode, ValidationError } from '@/utils/errorcode';
+import { ErrCode, ServerError, ValidationError } from '@/utils/errorcode';
 import { Controller } from 'egg';
 import yamlJoi from 'yaml-joi';
 
@@ -14,6 +14,18 @@ limitation:
       isSchema: true
 `).validate(value).error,
   };
+
+  public devThrowError() {
+    throw new Error('normal error');
+  }
+
+  public devThrowServerError() {
+    throw new ServerError();
+  }
+
+  public devThrowNotError() {
+    throw 0;
+  }
 
   public async getAllAccountChats() {
     const { accountId } = this.ctx.params;

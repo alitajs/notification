@@ -2,6 +2,10 @@ import { Application } from 'egg';
 
 export default async (app: Application) => {
   const { controller, router } = app;
+  router.get('/admin/dev/throw/error', controller.admin.devThrowError);
+  router.get('/admin/dev/throw/server-error', controller.admin.devThrowServerError);
+  router.get('/admin/dev/throw/not-error', controller.admin.devThrowNotError);
+
   /** admin - chat members */
   router.del('/admin/chat/:chatId', controller.admin.removeChat);
   router.del('/admin/chat/:chatId/account/:accountId', controller.admin.removeChatMember);

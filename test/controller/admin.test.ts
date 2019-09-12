@@ -177,6 +177,21 @@ describe('test controller.admin', () => {
           .set('X-Body-Format', 'json')
           .send(JSON.stringify([mockChatId.A]))
           .expect('X-Error-Code', ErrCode.Succeed),
+        app
+          .httpRequest()
+          .get(`/admin/dev/throw/error`)
+          .set('X-Body-Format', 'json')
+          .expect('X-Error-Code', ErrCode.Unknown),
+        app
+          .httpRequest()
+          .get(`/admin/dev/throw/server-error`)
+          .set('X-Body-Format', 'json')
+          .expect('X-Error-Code', ErrCode.ServerError),
+        app
+          .httpRequest()
+          .get(`/admin/dev/throw/not-error`)
+          .set('X-Body-Format', 'json')
+          .expect('X-Error-Code', ErrCode.SystemBusy),
       ].map(promisifyTestReq),
     );
 
