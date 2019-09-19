@@ -60,3 +60,9 @@ $ sh ./scripts/install/redis.sh
 $ npm run start:mysql && npm run start:redis && npm run start:migrate
 $ npm run restart:tsc
 ```
+
+## Framework
+
+### Database
+
+![image](https://user-images.githubusercontent.com/32428655/65237507-5a722a80-db0d-11e9-9df2-68e25cba36e4.png)
